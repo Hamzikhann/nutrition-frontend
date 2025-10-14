@@ -7,6 +7,7 @@ import Card from "../components/Card";
 import MultiSelectDropdown from "../components/MultiSelectDropdown";
 
 import { IoMdAdd } from "react-icons/io";
+import { MdEdit, MdDelete } from "react-icons/md";
 import ApiService from "../services/ApiServices";
 
 function DietPlan() {
@@ -47,6 +48,12 @@ function DietPlan() {
 	const [newSubCategoryName, setNewSubCategoryName] = useState("");
 	const [categoryErrors, setCategoryErrors] = useState({});
 	const [fileCategory, setFileCategory] = useState(null);
+	const [isEditCategoryModalOpen, setIsEditCategoryModalOpen] = useState(false);
+	const [selectedCategoryForEdit, setSelectedCategoryForEdit] = useState(null);
+	const [isEditSubCategoryModalOpen, setIsEditSubCategoryModalOpen] = useState(false);
+	const [selectedSubCategoryForEdit, setSelectedSubCategoryForEdit] = useState(null);
+	const [editCategoryForm, setEditCategoryForm] = useState({ title: "" });
+	const [editSubCategoryForm, setEditSubCategoryForm] = useState({ title: "", image: null });
 
 	useEffect(() => {
 		getDietPlans();
@@ -162,6 +169,60 @@ function DietPlan() {
 			console.error("Error adding sub category:", error);
 			alert("Failed to add sub category");
 		}
+	};
+
+	const handleDeleteCategory = async (categoryId) => {
+		if (window.confirm("Are you sure you want to delete this category?")) {
+			try {
+				let data = {
+					path: "categories/deleteCategory",
+					payload: { id: categoryId }
+				};
+				const response = await ApiService.postRequest(data);
+				if (response && response.status === 200) {
+					alert("Category deleted successfully!");
+					getCategories();
+				} else {
+					alert("Failed to delete category.");
+				}
+			} catch (error) {
+				console.error("Error deleting category:", error);
+				alert("An error occurred while deleting the category.");
+			}
+		}
+	};
+
+	const handleDeleteSubCategory = async (subCategoryId) => {
+		if (window.confirm("Are you sure you want to delete this subcategory?")) {
+			try {
+				let data = {
+					path: "categories/delete/subcategory",
+					payload: { id: subCategoryId }
+				};
+				const response = await ApiService.postRequest(data);
+				if (response ) {
+					alert("Subcategory deleted successfully!");
+					getDietPlans();
+				} else {
+					alert("Failed to delete subcategory.");
+				}
+			} catch (error) {
+				console.error("Error deleting subcategory:", error);
+				alert("An error occurred while deleting the subcategory.");
+			}
+		}
+	};
+
+	const handleEditCategory = (category) => {
+		setSelectedCategoryForEdit(category);
+		setEditCategoryForm({ title: category.title });
+		setIsEditCategoryModalOpen(true);
+	};
+
+	const handleEditSubCategory = (subCategory) => {
+		setSelectedSubCategoryForEdit(subCategory);
+		setEditSubCategoryForm({ title: subCategory.title, image: null });
+		setIsEditSubCategoryModalOpen(true);
 	};
 
 	const validateCategoryForm = () => {
@@ -303,6 +364,65 @@ function DietPlan() {
 		}
 	};
 
+		const handleUpdateCategory = async () => {
+	if (!editCategoryForm.title.trim()) return alert("Category name is required.");
+
+	try {
+		const response = await ApiService.postRequest({
+			path: "categories/updateCategory",
+			payload: {
+				name: editCategoryForm.title,
+				id: selectedCategoryForEdit.id,
+			},
+		});
+
+		if (response?.status === 200) {
+			alert("Category updated successfully!");
+			setIsEditCategoryModalOpen(false);
+			getCategories();
+		} else {
+			alert("Failed to update category.");
+		}
+	} catch (error) {
+		console.error("Error updating category:", error);
+		alert("An error occurred while updating the category.");
+	}
+};
+
+	const handleUpdateSubCategory = async () => {
+		if (!editSubCategoryForm.title.trim()) {
+			alert("Subcategory name is required.");
+			return;
+		}
+
+		let dataForm = new FormData();
+		dataForm.append("title", editSubCategoryForm.title);
+		if (editSubCategoryForm.image) {
+			dataForm.append("image", editSubCategoryForm.image);
+		}
+		dataForm.append("id", selectedSubCategoryForEdit.id);
+
+		try {
+			let data = {
+				path: "categories/update/subcategory",
+				payload: dataForm
+			};
+			const response = await ApiService.postRequest(data);
+			if (response && response.status === 200) {
+				alert("Subcategory updated successfully!");
+				setIsEditSubCategoryModalOpen(false);
+				setSelectedSubCategoryForEdit(null);
+				setEditSubCategoryForm({ title: "", image: null });
+				getDietPlans();
+			} else {
+				alert("Failed to update subcategory.");
+			}
+		} catch (error) {
+			console.error("Error updating subcategory:", error);
+			alert("An error occurred while updating the subcategory.");
+		}
+	};
+
 	const handleAddDietPlan = async () => {
 		if (!validateForm()) return;
 
@@ -402,7 +522,7 @@ function DietPlan() {
 						{categories.map((category, index) => (
 							<div
 								key={index}
-								className="flex flex-col items-center cursor-pointer flex-shrink-0 min-w-0"
+								className="group flex flex-col items-center cursor-pointer flex-shrink-0 min-w-0 relative"
 								onClick={() => setActiveTab(category.id)}
 							>
 								<p
@@ -415,6 +535,24 @@ function DietPlan() {
 								{activeTab === category.id && (
 									<span className="h-[2px] w-full bg-[#46acbe] mt-1 rounded transition-all duration-200"></span>
 								)}
+								{/* Tooltip */}
+								<div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gray-200 backdrop-blur-sm text-white text-xs rounded-lg px-3 py-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 flex gap-3 items-center shadow-lg border border-gray-700 pointer-events-none">
+																	<MdEdit
+																		className="cursor-pointer pointer-events-auto text-black hover:text-blue-400 transition-colors duration-200 text-sm"
+																		onClick={(e) => {
+																		e.stopPropagation();
+																		handleEditCategory(category);
+																		}}
+																	/>
+																	 <div className="w-[1px] h-3 bg-gray-600" /> {/* Divider line */}
+																	<MdDelete
+																		className="cursor-pointer text-black pointer-events-auto hover:text-red-400 transition-colors duration-200 text-sm"
+																		onClick={(e) => {
+																		e.stopPropagation();
+																		handleDeleteCategory(category.id);
+																		}}
+																	/>
+																</div>
 							</div>
 						))}
 					</div>
@@ -454,24 +592,48 @@ function DietPlan() {
 									return (
 										<div className="flex flex-col gap-4">
 											<div className="flex items-center gap-8">
-												{dishesCats.map((dishCat) => (
-													<div
-														key={dishCat}
-														className="flex flex-col items-center cursor-pointer"
-														onClick={() => setActiveSubTabs((prev) => ({ ...prev, [mealType]: dishCat }))}
-													>
-														<p
-															className={`text-lg hover:text-[#46acbe] ${
-																activeSub === dishCat ? "text-[#46acbe]" : "text-gray-500"
-															}`}
+												{dishesCats.map((dishCat) => {
+													const subCat = subCategories.find((sub) => sub.title === dishCat);
+													return (
+														<div
+															key={dishCat}
+															className="group flex flex-col items-center cursor-pointer relative"
+															onClick={() => setActiveSubTabs((prev) => ({ ...prev, [mealType]: dishCat }))}
 														>
-															{dishCat}
-														</p>
-														{activeSub === dishCat && (
-															<span className="h-[2px] w-[100%] bg-[#46acbe] mt-1 rounded"></span>
-														)}
-													</div>
-												))}
+															<p
+																className={`text-lg hover:text-[#46acbe] ${
+																	activeSub === dishCat ? "text-[#46acbe]" : "text-gray-500"
+																}`}
+															>
+																{dishCat}
+															</p>
+															{activeSub === dishCat && (
+																<span className="h-[2px] w-[100%] bg-[#46acbe] mt-1 rounded"></span>
+															)}
+															{/* Tooltip */}
+															{subCat && (
+																
+																<div className="absolute top-9 left-1/2 -translate-x-1/2 bg-gray-200 backdrop-blur-sm text-white text-xs rounded-lg px-3 py-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 flex gap-3 items-center shadow-lg border border-gray-700 pointer-events-none">
+																											<MdEdit
+																												className="cursor-pointer pointer-events-auto text-black hover:text-blue-400 transition-colors duration-200 text-sm"
+																												onClick={(e) => {
+																													e.stopPropagation();
+																													handleEditSubCategory(subCat);
+																												}}
+																											/>
+																											 <div className="w-[1px] h-3 bg-gray-600" /> {/* Divider line */}
+																											<MdDelete
+																												className="cursor-pointer text-black pointer-events-auto hover:text-red-400 transition-colors duration-200 text-sm"
+																												onClick={(e) => {
+																													e.stopPropagation();
+																													handleDeleteSubCategory(subCat.id);
+																												}}
+																											/>
+																										</div>
+															)}
+														</div>
+													);
+												})}
 											</div>
 											<div className="flex flex-wrap justify-center items-center gap-3">
 												{filteredMeals
@@ -1273,6 +1435,75 @@ function DietPlan() {
 						{categoryErrors.newSubCategoryName && (
 							<p className="text-red-500 text-sm">{categoryErrors.newSubCategoryName}</p>
 						)}
+					</div>
+				</div>
+			</Modal>
+
+			{/* Edit Category Modal */}
+			<Modal
+				isOpen={isEditCategoryModalOpen}
+				onClose={() => {
+					setIsEditCategoryModalOpen(false);
+					setSelectedCategoryForEdit(null);
+					setEditCategoryForm({ title: "" });
+				}}
+				title="Edit Category"
+				showTitle={true}
+				showCloseIcon={true}
+				showDivider={true}
+				width="min-w-[300px] max-w-lg"
+				secondaryBtnText="Cancel"
+				primaryBtnText="Update"
+				onPrimaryClick={handleUpdateCategory}
+			>
+				<div className="flex flex-col gap-4 pb-4">
+					<div className="w-full flex flex-col gap-2">
+						<label className="text-base font-normal text-gray-600">Category Name:</label>
+						<input
+							type="text"
+							value={editCategoryForm.title}
+							onChange={(e) => setEditCategoryForm({ ...editCategoryForm, title: e.target.value })}
+							placeholder="Enter category name"
+							className="w-full py-3 px-4 rounded-lg text-sm bg-gray-100 border border-gray-300 focus:outline-none focus:border-[#46acbe]"
+						/>
+					</div>
+				</div>
+			</Modal>
+
+			{/* Edit Subcategory Modal */}
+			<Modal
+				isOpen={isEditSubCategoryModalOpen}
+				onClose={() => {
+					setIsEditSubCategoryModalOpen(false);
+					setSelectedSubCategoryForEdit(null);
+					setEditSubCategoryForm({ title: "", image: null });
+				}}
+				title="Edit Subcategory"
+				showTitle={true}
+				showCloseIcon={true}
+				showDivider={true}
+				width="min-w-[300px] max-w-lg"
+				secondaryBtnText="Cancel"
+				primaryBtnText="Update"
+				onPrimaryClick={handleUpdateSubCategory}
+			>
+				<div className="flex flex-col gap-4 pb-4">
+					<div className="w-full flex flex-col gap-2">
+						<label className="text-base font-normal text-gray-600">Subcategory Name:</label>
+						<input
+							type="text"
+							value={editSubCategoryForm.title}
+							onChange={(e) => setEditSubCategoryForm({ ...editSubCategoryForm, title: e.target.value })}
+							placeholder="Enter subcategory name"
+							className="w-full py-3 px-4 rounded-lg text-sm bg-gray-100 border border-gray-300 focus:outline-none focus:border-[#46acbe]"
+						/>
+					</div>
+					<div className="w-full flex flex-col gap-2">
+						<label className="text-lg font-normal text-gray-600">Upload Image (optional):</label>
+						<ImgUploader
+							onFileSelect={(file) => setEditSubCategoryForm({ ...editSubCategoryForm, image: file })}
+							existingImage={selectedSubCategoryForEdit ? import.meta.env.VITE_VideoBaseURL + selectedSubCategoryForEdit.image : null}
+						/>
 					</div>
 				</div>
 			</Modal>
