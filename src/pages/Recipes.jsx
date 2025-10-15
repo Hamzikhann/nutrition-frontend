@@ -98,6 +98,17 @@ function Recipes() {
 		}
 	}, [recepies, activeTab]);
 
+	const parseNutritions = (nutritionsString) => {
+		if (!nutritionsString) return {};
+		const pairs = nutritionsString.split(',').map(s => s.trim());
+		const obj = {};
+		pairs.forEach(pair => {
+			const [key, value] = pair.split(' ');
+			if (key && value) obj[key.toLowerCase()] = value;
+		});
+		return obj;
+	};
+
 	const getCategories = useCallback(async () => {
 		let data = {
 			path: "dishes/list/category",
@@ -878,6 +889,28 @@ function Recipes() {
 								className="w-full max-w-xl h-72 object-cover rounded-xl shadow-md"
 							/>
 						</div>
+						{/* Category and Subcategory */}
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+							<div className="flex flex-col gap-3">
+								<label className="text-lg font-semibold text-gray-800">Category:</label>
+								<p className="text-base text-gray-900 bg-gray-100 p-3 rounded-lg shadow-inner">
+									{(() => {
+										const subCat = subCategories.find(sub => sub.id === selectedRecipe.dishesCategoryId);
+										const category = subCat ? categories.find(cat => cat.id === subCat.categoryId) : null;
+										return category ? category.title : 'N/A';
+									})()}
+								</p>
+							</div>
+							<div className="flex flex-col gap-3">
+								<label className="text-lg font-semibold text-gray-800">Subcategory:</label>
+								<p className="text-base text-gray-900 bg-gray-100 p-3 rounded-lg shadow-inner">
+									{(() => {
+										const subCat = subCategories.find(sub => sub.id === selectedRecipe.dishesCategoryId);
+										return subCat ? subCat.title : 'N/A';
+									})()}
+								</p>
+							</div>
+						</div>
 						<div className="flex flex-col gap-6">
 							<label className="text-lg font-semibold text-gray-800">Ingredients:</label>
 							<div className="bg-gray-100 p-5 rounded-lg max-h-40 overflow-y-auto shadow-inner">
@@ -890,10 +923,35 @@ function Recipes() {
 								<p className="text-base text-gray-900 whitespace-pre-wrap">{selectedRecipe.directions}</p>
 							</div>
 						</div>
+						{/* Nutritions in card format */}
 						<div className="flex flex-col gap-6">
-							<label className="text-lg font-semibold text-gray-800">Nutritions:</label>
-							<div className="bg-gray-100 p-5 rounded-lg shadow-inner">
-								<p className="text-base text-gray-900 whitespace-pre-wrap">{selectedRecipe.nutritions}</p>
+							<h2 className="text-xl font-bold text-gray-900 border-b pb-3">Nutrition (Per Serving)</h2>
+							<div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+								{(() => {
+									const nutritions = parseNutritions(selectedRecipe.nutritions);
+									const nutritionMap = {
+										cal: { label: 'Calories', color: 'blue' },
+										protein: { label: 'Protein', color: 'green' },
+										carbs: { label: 'Carbs', color: 'yellow' },
+										fats: { label: 'Fat', color: 'red' },
+									};
+									return Object.entries(nutritions).map(([key, value]) => {
+										const mapping = nutritionMap[key] || { label: key.charAt(0).toUpperCase() + key.slice(1), color: 'gray' };
+										const colorClasses = {
+											blue: 'bg-blue-100 text-blue-700 text-blue-800',
+											green: 'bg-green-100 text-green-700 text-green-800',
+											yellow: 'bg-yellow-100 text-yellow-700 text-yellow-800',
+											red: 'bg-red-100 text-red-700 text-red-800',
+											gray: 'bg-gray-100 text-gray-700 text-gray-800',
+										};
+										return (
+											<div key={key} className={`flex flex-col items-center p-5 rounded-xl shadow-md ${colorClasses[mapping.color]}`}>
+												<label className={`text-base font-semibold`}>{mapping.label}</label>
+												<p className={`text-2xl font-extrabold`}>{value} g</p>
+											</div>
+										);
+									});
+								})()}
 							</div>
 						</div>
 						{selectedRecipe.note && (

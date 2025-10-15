@@ -30,6 +30,7 @@ function Community() {
 	const [hasFetchedGroups, setHasFetchedGroups] = useState(false);
 	const [allCommentsFetched, setAllCommentsFetched] = useState(false);
 	const [answerFilter, setAnswerFilter] = useState("all");
+	const [dateFilter, setDateFilter] = useState("");
 	const [postForm, setPostForm] = useState({
 		title: "",
 		content: "",
@@ -96,6 +97,7 @@ function Community() {
 		if (selectedGroup) {
 			getPosts(selectedGroup);
 			setAllCommentsFetched(false); // Reset when group changes
+			setDateFilter(""); // Reset date filter when group changes
 		}
 	}, [selectedGroup]);
 
@@ -306,9 +308,54 @@ function Community() {
 		return post.comments.some(comment => comment.userId === adminId);
 	}, [adminId]);
 
-	// Filtered posts based on answer filter only
+	// Filtered posts based on date and answer filters
 	const filteredPosts = useMemo(() => {
 		let filtered = [...posts];
+
+		// Date filter
+		if (dateFilter) {
+			// Create date in local timezone to avoid UTC conversion issues
+			const selectedDate = new Date(dateFilter + 'T12:00:00'); // Use noon to avoid timezone issues
+			// Get local date string instead of UTC
+			const selectedDateString = selectedDate.getFullYear() + '-' +
+				String(selectedDate.getMonth() + 1).padStart(2, '0') + '-' +
+				String(selectedDate.getDate()).padStart(2, '0');
+
+			filtered = filtered.filter(post => {
+				// Parse the date string properly (handles formats like "2025-10-16 01:10:13" or "16/10/2025, 01:10 am")
+				let postDate;
+				try {
+					let dateStr = post.createdAt;
+
+					// Handle different date formats
+					if (dateStr.includes('/')) {
+						// Handle format like "16/10/2025, 01:10 am"
+						const parts = dateStr.split(',')[0].split('/');
+						if (parts.length === 3) {
+							// Convert DD/MM/YYYY to YYYY-MM-DD
+							dateStr = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+						}
+					}
+
+					// Try parsing as ISO string first
+					postDate = new Date(dateStr.replace(' ', 'T'));
+					if (isNaN(postDate.getTime())) {
+						// Fallback to direct parsing
+						postDate = new Date(dateStr);
+					}
+
+					// Check if date is valid
+					if (isNaN(postDate.getTime())) {
+						return false;
+					}
+				} catch (error) {
+					return false;
+				}
+
+				const postDateString = postDate.toISOString().split('T')[0];
+				return postDateString === selectedDateString;
+			});
+		}
 
 		// Answer filter
 		if (answerFilter !== "all" && allCommentsFetched) {
@@ -324,7 +371,7 @@ function Community() {
 		}
 
 		return filtered;
-	}, [posts, answerFilter, hasAdminComment, allCommentsFetched]);
+	}, [posts, dateFilter, answerFilter, hasAdminComment, allCommentsFetched]);
 
 	const getComments = useCallback(
 		async (postId, index) => {
@@ -635,6 +682,24 @@ function Community() {
 
 							{/* Filters Section */}
 							<div className="flex flex-wrap items-center gap-4 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+								<div className="flex items-center gap-2">
+									<label className="text-sm font-medium text-gray-600">Date:</label>
+									<input
+										type="date"
+										value={dateFilter}
+										onChange={(e) => setDateFilter(e.target.value)}
+										className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#46abbd]"
+									/>
+									{dateFilter && (
+										<button
+											onClick={() => setDateFilter("")}
+											className="text-gray-500 hover:text-gray-700 text-sm ml-1"
+										>
+											Clear
+										</button>
+									)}
+								</div>
+
 								<div className="flex items-center gap-2">
 									<label className="text-sm font-medium text-gray-600">Status:</label>
 									<select
