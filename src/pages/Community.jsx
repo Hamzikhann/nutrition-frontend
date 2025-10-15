@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import Searchbar from "../components/Searchbar";
 import Button from "../components/Button";
 import Modal from "../components/Modal";
@@ -15,6 +15,7 @@ import ApiService from "../services/ApiServices";
 import { formatToLocalTime } from "../services/Timezone";
 
 function Community() {
+	const adminId = "UWRuejBBVlRwcm9xaEpoaFhoK2hEUT09";
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 	const [isGroupOpen, setIsGroupOpen] = useState(false);
 	const [isPostOpen, setIsPostOpen] = useState(false);
@@ -27,6 +28,8 @@ function Community() {
 	const [posts, setPosts] = useState([]);
 	const [loadingPosts, setLoadingPosts] = useState(false);
 	const [hasFetchedGroups, setHasFetchedGroups] = useState(false);
+	const [allCommentsFetched, setAllCommentsFetched] = useState(false);
+	const [answerFilter, setAnswerFilter] = useState("all");
 	const [postForm, setPostForm] = useState({
 		title: "",
 		content: "",
@@ -92,6 +95,7 @@ function Community() {
 	useEffect(() => {
 		if (selectedGroup) {
 			getPosts(selectedGroup);
+			setAllCommentsFetched(false); // Reset when group changes
 		}
 	}, [selectedGroup]);
 
@@ -219,10 +223,16 @@ function Community() {
 				});
 			}
 
-			// Handle images to remove - filter out null/undefined
-			const validImagesToRemove = imagesToRemove.filter((id) => id && id !== "null");
+			// Handle images to remove - filter out null/undefined and invalid IDs
+			const validImagesToRemove = imagesToRemove.filter((id) => id && id !== "null" && id !== "old-main-image");
 			if (validImagesToRemove.length > 0) {
 				formData.append("imagesToRemove", JSON.stringify(validImagesToRemove));
+			}
+
+			// Handle old main image removal separately
+			const removeOldImage = imagesToRemove.includes("old-main-image");
+			if (removeOldImage) {
+				formData.append("removeOldImage", "true");
 			}
 
 			formData.append("title", editPostForm.title);
@@ -241,7 +251,10 @@ function Community() {
 
 			console.log(res);
 			if (res) {
-				getPosts(selectedGroup);
+				// Refresh posts to get updated data
+				await getPosts(selectedGroup);
+
+				// Close modal and reset state
 				setIsEditPostOpen(false);
 				setPostToEdit(null);
 				setEditPostForm({
@@ -288,6 +301,31 @@ function Community() {
 		}
 	}, []);
 
+	// Function to check if post has admin comment
+	const hasAdminComment = useCallback((post) => {
+		return post.comments.some(comment => comment.userId === adminId);
+	}, [adminId]);
+
+	// Filtered posts based on answer filter only
+	const filteredPosts = useMemo(() => {
+		let filtered = [...posts];
+
+		// Answer filter
+		if (answerFilter !== "all" && allCommentsFetched) {
+			filtered = filtered.filter(post => {
+				const hasAdmin = hasAdminComment(post);
+				if (answerFilter === "answered") {
+					return hasAdmin;
+				} else if (answerFilter === "unanswered") {
+					return !hasAdmin;
+				}
+				return true;
+			});
+		}
+
+		return filtered;
+	}, [posts, answerFilter, hasAdminComment, allCommentsFetched]);
+
 	const getComments = useCallback(
 		async (postId, index) => {
 			const currentPost = posts[index];
@@ -312,6 +350,44 @@ function Community() {
 		},
 		[posts]
 	);
+
+	// Function to fetch all comments for filtering (called when filters are applied)
+	const fetchAllCommentsForFiltering = useCallback(async () => {
+		if (allCommentsFetched) return;
+
+		const promises = posts.map(async (post, index) => {
+			if (post.comments.length === 0) {
+				try {
+					let data = {
+						path: "communityComments/list",
+						payload: { postId: post.id }
+					};
+					const res = await ApiService.postRequest(data);
+					return { index, comments: res.data.comments || [] };
+				} catch (error) {
+					console.error("Error fetching comments for filtering:", error);
+					return { index, comments: [] };
+				}
+			}
+			return null;
+		});
+
+		const results = await Promise.all(promises);
+		setPosts((prev) =>
+			prev.map((p, i) => {
+				const result = results.find(r => r && r.index === i);
+				return result ? { ...p, comments: result.comments } : p;
+			})
+		);
+		setAllCommentsFetched(true);
+	}, [posts, allCommentsFetched]);
+
+	// Fetch all comments when answer filter is applied
+	useEffect(() => {
+		if (answerFilter !== "all" && !allCommentsFetched) {
+			fetchAllCommentsForFiltering();
+		}
+	}, [answerFilter, allCommentsFetched, fetchAllCommentsForFiltering]);
 
 	const addComment = useCallback(async (postId, comment, index) => {
 		if (!comment.trim()) return;
@@ -421,40 +497,42 @@ function Community() {
 
 		const existingImages = [];
 
-		// Add old single image if exists
-		if (postToEdit.image) {
+		// Add old single image if exists and not marked for removal
+		if (postToEdit.image && !imagesToRemove.includes("old-main-image")) {
 			existingImages.push({
 				id: "old-main-image",
 				url: import.meta.env.VITE_VideoBaseURL + postToEdit.image
 			});
 		}
 
-		// Add multiple images from communityPostMedia if exist
+		// Add multiple images from communityPostMedia if exist and not marked for removal
 		if (postToEdit.communityPostMedia && postToEdit.communityPostMedia.length > 0) {
 			postToEdit.communityPostMedia.forEach((media) => {
-				existingImages.push({
-					id: media.id,
-					url: import.meta.env.VITE_VideoBaseURL + media.media
-				});
+				if (!imagesToRemove.includes(media.id)) {
+					existingImages.push({
+						id: media.id,
+						url: import.meta.env.VITE_VideoBaseURL + media.media
+					});
+				}
 			});
 		}
 
 		return existingImages;
 	};
 
-	// Usage in modal
-	<MultiImgUploader
-		onFileSelect={setEditFiles}
-		existingImages={getExistingImages()}
-		onRemoveExisting={(imageId) => {
-			console.log("Removing image with ID:", imageId);
-			setImagesToRemove((prev) => {
-				const newList = [...prev, imageId];
-				console.log("Updated imagesToRemove:", newList);
-				return newList;
-			});
-		}}
-	/>;
+			// Usage in modal
+			<MultiImgUploader
+				onFileSelect={setEditFiles}
+				existingImages={getExistingImages()}
+				onRemoveExisting={(imageId) => {
+					console.log("Removing image with ID:", imageId);
+					setImagesToRemove((prev) => {
+						const newList = [...prev, imageId];
+						console.log("Updated imagesToRemove:", newList);
+						return newList;
+					});
+				}}
+			/>;
 
 	return (
 		<>
@@ -555,10 +633,29 @@ function Community() {
 								/>
 							</div>
 
+							{/* Filters Section */}
+							<div className="flex flex-wrap items-center gap-4 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+								<div className="flex items-center gap-2">
+									<label className="text-sm font-medium text-gray-600">Status:</label>
+									<select
+										value={answerFilter}
+										onChange={(e) => setAnswerFilter(e.target.value)}
+										className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#46abbd]"
+									>
+										<option value="all">All Posts</option>
+										<option value="answered">Answered</option>
+										<option value="unanswered">Unanswered</option>
+									</select>
+									{answerFilter !== "all" && !allCommentsFetched && (
+										<span className="text-xs text-gray-500 ml-2">Loading comments...</span>
+									)}
+								</div>
+							</div>
+
 							{loadingPosts ? (
 								<p>Loading posts...</p>
 							) : (
-								posts.map((post, index) => (
+								filteredPosts.map((post, index) => (
 									<div
 										key={post.id}
 										className="bg-white rounded-xl shadow-md sm:p-4 p-3 w-full mx-auto border border-gray-200"
@@ -1043,8 +1140,8 @@ function Community() {
 							<div className="mt-3">
 								<p className="text-sm text-gray-600 mb-2">Current Images:</p>
 								<div className="flex flex-wrap gap-2">
-									{/* Show old single image if exists */}
-									{postToEdit?.image && (
+									{/* Show old single image if exists and not marked for removal */}
+									{postToEdit?.image && !imagesToRemove.includes("old-main-image") && (
 										<div className="relative">
 											<img
 												src={import.meta.env.VITE_VideoBaseURL + postToEdit.image}
@@ -1055,16 +1152,18 @@ function Community() {
 										</div>
 									)}
 
-									{/* Show multiple images from communityPostMedia */}
+									{/* Show multiple images from communityPostMedia not marked for removal */}
 									{postToEdit?.communityPostMedia?.map((media) => (
-										<div key={media.id} className="relative">
-											<img
-												src={import.meta.env.VITE_VideoBaseURL + media.media}
-												alt="Post media"
-												className="w-20 h-20 object-cover rounded-lg border border-gray-300"
-											/>
-											<span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs px-1 rounded">New</span>
-										</div>
+										!imagesToRemove.includes(media.id) && (
+											<div key={media.id} className="relative">
+												<img
+													src={import.meta.env.VITE_VideoBaseURL + media.media}
+													alt="Post media"
+													className="w-20 h-20 object-cover rounded-lg border border-gray-300"
+												/>
+												<span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs px-1 rounded">New</span>
+											</div>
+										)
 									))}
 								</div>
 								<p className="text-xs text-gray-500 mt-1">Note: New images will be added to existing ones</p>
