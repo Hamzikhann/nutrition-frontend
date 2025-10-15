@@ -17,6 +17,7 @@ function Supplements() {
 		description: "",
 		supplementCategoryId: "",
 		externalLink: "",
+		dosage: "",
 		image: null
 	});
 	const [folderForm, setFolderForm] = useState({
@@ -86,6 +87,7 @@ function Supplements() {
 			formData.append("description", supplementForm.description);
 			formData.append("supplementCategoryId", supplementForm.supplementCategoryId);
 			formData.append("externalLink", supplementForm.externalLink);
+			formData.append("dosage", supplementForm.dosage);
 			formData.append("image", supplementForm.image);
 
 			let data = {
@@ -107,6 +109,7 @@ function Supplements() {
 					description: "",
 					supplementCategoryId: "",
 					externalLink: "",
+					dosage: "",
 					image: null
 				});
 				setIsEditingSupplement(false);
@@ -125,6 +128,7 @@ function Supplements() {
 			description: supplement.description,
 			supplementCategoryId: supplement.supplementsCategoryId,
 			externalLink: supplement.externalLink,
+			dosage: supplement.dosage,
 			image: supplement.image
 		});
 		setIsSupplementOpen(true);
@@ -213,6 +217,7 @@ function Supplements() {
 								description={supplement.description}
 								pic={supplement.image}
 								externalLink={supplement.externalLink}
+								dosage={supplement.dosage}
 								openLink={openLink}
 								onEdit={() => handleEdit(supplement)}
 								onDelete={() => handleDelete(supplement.id)}
@@ -265,7 +270,6 @@ function Supplements() {
 							className="w-full py-3 px-4 rounded-lg text-sm bg-gray-100 border border-gray-300
                 focus:outline-none focus:border-[#46acbe] resize-y"
 						/>
-						<p className="text-xs text-gray-600">10,000 Max Characters</p>
 					</div>
 					<div className="w-full flex flex-col gap-2">
 						<label className="text-base font-normal text-gray-600">Folder:</label>
@@ -288,6 +292,17 @@ function Supplements() {
 						<ImgUploader
 							onFileSelect={(file) => setSupplementForm({ ...supplementForm, image: file })}
 							existingImage={isEditingSupplement ? import.meta.env.VITE_VideoBaseURL + editingSupplement.image : null}
+						/>
+					</div>
+					<div className="w-full flex flex-col gap-2">
+						<label className="text-base font-normal text-gray-600">Dosage:</label>
+						<input
+							type="text"
+							placeholder="enter dosage"
+							value={supplementForm.dosage}
+							onChange={(e) => setSupplementForm({ ...supplementForm, dosage: e.target.value })}
+							className="w-full py-3 px-4 rounded-lg text-sm bg-gray-100 border border-gray-300
+              focus:outline-none focus:border-[#46acbe]"
 						/>
 					</div>
 					<div className="w-full flex flex-col gap-2">
@@ -335,7 +350,7 @@ function Supplements() {
 	);
 }
 
-export function SupplementCard({ name, description, pic, externalLink, openLink, onEdit, onDelete }) {
+export function SupplementCard({ name, description, pic, externalLink, dosage, openLink, onEdit, onDelete }) {
 	const [open, setOpen] = useState(false);
 	return (
 		<div className="w-full sm:w-80 p-4 rounded-xl bg-white shadow-md hover:shadow-lg transition-shadow flex flex-col gap-3">
@@ -378,6 +393,9 @@ export function SupplementCard({ name, description, pic, externalLink, openLink,
 				)}
 			</div>
 			<p className="text-sm font-light text-gray-500 line-clamp-3">{description}</p>
+			
+			<p className="text-sm font-medium text-[#46acbe]">Dosage: {dosage}</p>
+			
 			<button
 				className="w-full rounded-lg bg-white text-[#234c50] border border-[#234c50] py-2 hover:bg-[#234c50] hover:text-white transition-colors"
 				onClick={() => openLink(externalLink)}

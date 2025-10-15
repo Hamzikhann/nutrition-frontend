@@ -11,7 +11,7 @@ function HowToUse() {
 	const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 	const [isContentModalOpen, setIsContentModalOpen] = useState(false);
 	const [categoryForm, setCategoryForm] = useState({ title: "" });
-	const [contentForm, setContentForm] = useState({ categoryId: "", title: "", video: "" });
+	const [contentForm, setContentForm] = useState({ categoryId: "", title: "", description: "", video: "" });
 	const [file, setFile] = useState(null);
 	const [errors, setErrors] = useState({});
 	const [loading, setLoading] = useState(false);
@@ -69,6 +69,9 @@ function HowToUse() {
 		if (!contentForm.title.trim()) {
 			newErrors.title = "Title is required";
 		}
+		if (!contentForm.description.trim()) {
+			newErrors.description = "Description is required";
+		}
 		if (!contentForm.video.trim() && !file) {
 			newErrors.media = "Video URL or Image is required";
 		}
@@ -106,6 +109,7 @@ function HowToUse() {
 			if (file) formData.append("media", file);
 			formData.append("categoryId", contentForm.categoryId);
 			formData.append("title", contentForm.title);
+			formData.append("description", contentForm.description);
 			// formData.append("video", contentForm.video);
 
 			let data = {
@@ -113,7 +117,7 @@ function HowToUse() {
 				payload: formData
 			};
 			await ApiService.postRequest(data);
-			setContentForm({ categoryId: "", title: "", video: "" });
+			setContentForm({ categoryId: "", title: "", description: "", video: "" });
 			setFile(null);
 			setIsContentModalOpen(false);
 			setErrors({});
@@ -128,7 +132,7 @@ function HowToUse() {
 	const handleEditContent = (item) => {
 		console.log(item);
 		setSelectedContent(item);
-		setContentForm({ categoryId: item.howTouseCategoryId, title: item.title, video: item.media || "" });
+		setContentForm({ categoryId: item.howTouseCategoryId, title: item.title, description: item.description || "", video: item.media || "" });
 		setFile(null);
 		setIsEditMode(true);
 		setIsContentModalOpen(true);
@@ -145,6 +149,7 @@ function HowToUse() {
 			formData.append("id", selectedContent.id);
 			formData.append("categoryId", contentForm.categoryId);
 			formData.append("title", contentForm.title);
+			formData.append("description", contentForm.description);
 			// formData.append("media", contentForm.video);
 
 			let data = {
@@ -152,7 +157,7 @@ function HowToUse() {
 				payload: formData
 			};
 			await ApiService.postRequest(data);
-			setContentForm({ categoryId: "", title: "", video: "" });
+			setContentForm({ categoryId: "", title: "", description: "", video: "" });
 			setFile(null);
 			setIsContentModalOpen(false);
 			setIsEditMode(false);
@@ -241,6 +246,7 @@ function HowToUse() {
 								className="w-full sm:w-[300px] p-4 rounded-xl bg-white flex flex-col gap-3 shadow-sm hover:shadow-md transition relative"
 							>
 								<div className="text-lg font-bold text-[#234c50]">{item.title}</div>
+								<div className="text-sm text-gray-600 mt-1">{item.description}</div>
 								<div className="relative">
 									{item.media.includes(".mp4") ? (
 										<video
@@ -332,7 +338,7 @@ function HowToUse() {
 						if (isEditMode) {
 							setIsEditMode(false);
 							setSelectedContent(null);
-							setContentForm({ categoryId: "", title: "", video: "" });
+							setContentForm({ categoryId: "", title: "", description: "", video: "" });
 							setFile(null);
 						}
 					}}
@@ -377,6 +383,19 @@ function HowToUse() {
 								} focus:outline-none focus:border-[#46acbe]`}
 							/>
 							{errors.title && <p className="text-red-500 text-xs">{errors.title}</p>}
+						</div>
+						<div className="w-full flex flex-col gap-2">
+							<label className="text-base font-normal text-gray-600">Description:</label>
+							<textarea
+								placeholder="Enter description"
+								value={contentForm.description}
+								onChange={(e) => setContentForm({ ...contentForm, description: e.target.value })}
+								className={`w-full py-3 px-4 rounded-lg text-sm bg-gray-100 border ${
+									errors.description ? "border-red-500" : "border-gray-300"
+								} focus:outline-none focus:border-[#46acbe] resize-none`}
+								rows="3"
+							/>
+							{errors.description && <p className="text-red-500 text-xs">{errors.description}</p>}
 						</div>
 						<div className="w-full flex flex-col gap-2">
 							<label className="text-base font-normal text-gray-600">Upload Image/Video :</label>

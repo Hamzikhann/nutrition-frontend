@@ -179,8 +179,8 @@ function Moderators() {
 		if (window.confirm("Are you sure you want to delete this moderator?")) {
 			try {
 				let data = {
-					path: "moderators/delete",
-					payload: { id: row.id }
+					path: "users/delete",
+					payload: { userId: row.id }
 				};
 				await ApiService.postRequest(data);
 				getModerators();

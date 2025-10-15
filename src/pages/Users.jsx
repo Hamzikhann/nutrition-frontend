@@ -5,7 +5,7 @@ import Modal from "../components/Modal";
 import ImgUploader from "../components/ImgUploader";
 import DataTable from "react-data-table-component";
 import Filter from "../components/Filter";
-import { IoMdAdd, IoMdMore } from "react-icons/io";
+import { IoMdAdd, IoMdMore, IoMdRemove } from "react-icons/io";
 import ApiService from "../services/ApiServices";
 import {
 	BarChart,
@@ -154,6 +154,9 @@ function Users() {
 	const [isProgressOpen, setIsProgressOpen] = useState(false);
 	const [progressData, setProgressData] = useState(null);
 	const [loadingProgress, setLoadingProgress] = useState(false);
+	const [isBmrOpen, setIsBmrOpen] = useState(false);
+	const [selectedUserForBmr, setSelectedUserForBmr] = useState(null);
+	const [bmrValue, setBmrValue] = useState("");
 
 	const handleTransactionClick = (row) => {
 		setSelectedUser(row);
@@ -219,7 +222,7 @@ function Users() {
 	const handleDeactivate = async (row) => {
 		try {
 			let data = {
-				path: "users/delete",
+				path: "users/deactivate",
 				payload: { userId: row.id }
 			};
 			let res = await ApiService.postRequest(data);
@@ -229,6 +232,22 @@ function Users() {
 			}
 		} catch (error) {
 			console.error("Error deactivating user:", error);
+		}
+	};
+
+	const handleDeleteUser = async (row) => {
+		try {
+			let data = {
+				path: "users/delete",
+				payload: { userId: row.id }
+			};
+			let res = await ApiService.postRequest(data);
+			if (res) {
+				// Refresh users list
+				getUsers();
+			}
+		} catch (error) {
+			console.error("Error deleting user:", error);
 		}
 	};
 
@@ -283,6 +302,12 @@ function Users() {
 								Progress
 							</button>
 							<button
+								onClick={() => handleUpdateBmr(row)}
+								className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
+							>
+								Update BMR
+							</button>
+							<button
 								onClick={() => handleAssignSupplement(row)}
 								className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
 							>
@@ -296,6 +321,12 @@ function Users() {
 									Deactivate User
 								</button>
 							)}
+							<button
+								onClick={() => handleDeleteUser(row)}
+								className="block w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 text-left"
+							>
+								Delete User
+							</button>
 						</div>
 					)}
 				</div>
@@ -483,6 +514,38 @@ function Users() {
 		}
 	};
 
+	const handleUpdateBmr = (row) => {
+		setSelectedUserForBmr(row);
+		setBmrValue(row.bmr || "0");
+		setIsBmrOpen(true);
+		setOpenMenuId(null);
+	};
+
+	const updateBmr = async () => {
+		try {
+			let data = {
+				path: "users/update/bmr",
+				payload: {
+					userId: selectedUserForBmr.id,
+					bmr: bmrValue
+				}
+			};
+			await ApiService.postRequest(data);
+			setIsBmrOpen(false);
+			setSelectedUserForBmr(null);
+			setBmrValue(bmrValue);
+			getUsers(); // Refresh the user list
+		} catch (error) {
+			console.log(error);
+		}
+	};
+
+	const handleBmrChange = (increment) => {
+		const currentValue = parseInt(bmrValue) || 0;
+		const newValue = increment ? currentValue + 100 : currentValue - 100;
+		setBmrValue(newValue.toString());
+	};
+
 	return (
 		<>
 			<section className="bg-gray-50 sm:p-7 p-4 min-h-screen flex gap-12 flex-col">
@@ -534,7 +597,7 @@ function Users() {
 					</div>
 					<p className="text-base text-gray-500">Total Users: 1128</p>
 
-					<div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
+					<div className="min-h-screen overflow-x-auto">
 						<div className="min-w-[900px]">
 							{" "}
 							{/* Ye ensure karega ke scroll aaye jab width kam ho */}
@@ -1012,6 +1075,44 @@ function Users() {
 								<label className="text-sm text-gray-700">{category.title}</label>
 							</div>
 						))}
+					</div>
+				</div>
+			</Modal>
+
+			{/* BMR Update Modal */}
+			<Modal
+				isOpen={isBmrOpen}
+				onClose={() => setIsBmrOpen(false)}
+				title={`Update BMR for ${selectedUserForBmr?.firstName} ${selectedUserForBmr?.lastName}`}
+				showTitle={true}
+				showCloseIcon={true}
+				showDivider={true}
+				width="min-w-[300px] max-w-md"
+				secondaryBtnText="Cancel"
+				primaryBtnText="Update"
+				onPrimaryClick={updateBmr}
+			>
+				<div className="flex flex-col gap-6 pb-4">
+					<div className="text-center">
+						<label className="text-lg font-medium text-gray-700 mb-4 block">Current BMR Value</label>
+						<div className="flex items-center justify-center gap-4">
+							<button
+								onClick={() => handleBmrChange(false)}
+								className="w-12 h-12 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition"
+							>
+								<IoMdRemove size={24} />
+							</button>
+							<div className="text-3xl font-bold text-[#46abbd] min-w-[100px] text-center">
+								{bmrValue}
+							</div>
+							<button
+								onClick={() => handleBmrChange(true)}
+								className="w-12 h-12 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center transition"
+							>
+								<IoMdAdd size={24} />
+							</button>
+						</div>
+						<p className="text-sm text-gray-500 mt-2">Click + or - to adjust by 100</p>
 					</div>
 				</div>
 			</Modal>

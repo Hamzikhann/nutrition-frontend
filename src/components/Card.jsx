@@ -61,13 +61,13 @@ function Card({ name, date, pic, setSelected, setIsViewModalOpen, item, handleDe
 				{/* Left Side */}
 				<div>
 					<p
-						className="text-lg font-bold text-[#234c50] mb-2 truncate"
+						className="text-lg font-bold text-[#234c50] mb-2"
 						onClick={() => {
 							setSelected(item);
 							setIsViewModalOpen(true);
 						}}
 					>
-						{name}
+						{name.length > 17 ? `${name.substring(0, 17)}...` : name}
 					</p>
 					<p className="text-base font-light text-gray-500">{date}</p>
 				</div>

@@ -591,7 +591,7 @@ function DietPlan() {
 									const activeSub = activeSubTabs[mealType] || (dishesCats.length > 0 ? dishesCats[0] : "");
 									return (
 										<div className="flex flex-col gap-4">
-											<div className="flex items-center gap-8">
+											<div className="flex items-center flex-wrap gap-8">
 												{dishesCats.map((dishCat) => {
 													const subCat = subCategories.find((sub) => sub.title === dishCat);
 													return (
@@ -601,7 +601,7 @@ function DietPlan() {
 															onClick={() => setActiveSubTabs((prev) => ({ ...prev, [mealType]: dishCat }))}
 														>
 															<p
-																className={`text-lg hover:text-[#46acbe] ${
+																className={`text-lg hover:text-[#46acbe] text-nowrap ${
 																	activeSub === dishCat ? "text-[#46acbe]" : "text-gray-500"
 																}`}
 															>
@@ -635,7 +635,7 @@ function DietPlan() {
 													);
 												})}
 											</div>
-											<div className="flex flex-wrap justify-center items-center gap-3">
+											<div className="flex mt-8 flex-wrap justify-center items-center gap-3">
 												{filteredMeals
 													.filter((m) => m.mealType.title === mealType && m.dishesCategory.title === activeSub)
 													.map((meal, index) => (
