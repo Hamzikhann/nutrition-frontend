@@ -35,7 +35,6 @@ function Supplements() {
 			};
 
 			const res = await ApiService.postRequest(data);
-			console.log(res.data);
 			setStatuses(res.data.data);
 		} catch (error) {
 			console.log(error);
@@ -64,7 +63,6 @@ function Supplements() {
 				payload: folderForm
 			};
 			const res = await ApiService.postRequest(data);
-			console.log(res.data);
 			if (res.data) {
 				// toast.success("Folder added successfully");
 				getSupplements();
@@ -99,7 +97,6 @@ function Supplements() {
 				formData.append("id", editingSupplement.id);
 			}
 			const res = await ApiService.postRequest(data);
-			console.log(res.data);
 			if (res.data) {
 				// toast.success(isEditingSupplement ? "Supplement updated successfully" : "Supplement added successfully");
 				setIsSupplementOpen(false);
@@ -121,7 +118,6 @@ function Supplements() {
 	};
 
 	const handleEdit = (supplement) => {
-		console.log(supplement);
 		setEditingSupplement(supplement);
 		setSupplementForm({
 			title: supplement.title,
@@ -393,9 +389,9 @@ export function SupplementCard({ name, description, pic, externalLink, dosage, o
 				)}
 			</div>
 			<p className="text-sm font-light text-gray-500 line-clamp-3">{description}</p>
-			
+
 			<p className="text-sm font-medium text-[#46acbe]">Dosage: {dosage}</p>
-			
+
 			<button
 				className="w-full rounded-lg bg-white text-[#234c50] border border-[#234c50] py-2 hover:bg-[#234c50] hover:text-white transition-colors"
 				onClick={() => openLink(externalLink)}

@@ -131,7 +131,6 @@ function Banner() {
 				payload: {}
 			};
 			let res = await ApiService.postRequest(data);
-			console.log(res);
 			setBanners(res.data.data || []);
 		} catch (error) {
 			console.error("Error fetching banners:", error);

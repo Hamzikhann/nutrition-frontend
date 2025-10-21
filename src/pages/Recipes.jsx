@@ -100,10 +100,10 @@ function Recipes() {
 
 	const parseNutritions = (nutritionsString) => {
 		if (!nutritionsString) return {};
-		const pairs = nutritionsString.split(',').map(s => s.trim());
+		const pairs = nutritionsString.split(",").map((s) => s.trim());
 		const obj = {};
-		pairs.forEach(pair => {
-			const [key, value] = pair.split(' ');
+		pairs.forEach((pair) => {
+			const [key, value] = pair.split(" ");
 			if (key && value) obj[key.toLowerCase()] = value;
 		});
 		return obj;
@@ -162,8 +162,6 @@ function Recipes() {
 
 	const addCategoryAPI = async (name, subCategoryName) => {
 		try {
-			console.log(name);
-			console.log(subCategoryName);
 			let formData = new FormData();
 			formData.append("name", name);
 			formData.append("subCategoryName", subCategoryName);
@@ -173,7 +171,6 @@ function Recipes() {
 				path: "dishes/create/maincategory",
 				payload: formData
 			};
-			console.log(data);
 			const response = await ApiService.postRequest(data);
 			if (response && response.data) {
 				// Refresh categories
@@ -188,8 +185,6 @@ function Recipes() {
 
 	const addSubCategoryAPI = async (name, categoryId) => {
 		try {
-			console.log(name);
-			console.log(categoryId);
 			let formData = new FormData();
 			formData.append("title", name);
 			formData.append("categoryId", categoryId);
@@ -199,7 +194,6 @@ function Recipes() {
 				path: "dishes/create/category",
 				payload: formData
 			};
-			console.log(data);
 			const response = await ApiService.postRequest(data);
 			if (response && response.data) {
 				// Refresh categories and sub categories
@@ -336,7 +330,6 @@ function Recipes() {
 				path: "dishes/create",
 				payload: dataForm
 			};
-			console.log(data);
 			const response = await ApiService.postRequest(data);
 
 			if (response && response.status === 200) {
@@ -367,15 +360,10 @@ function Recipes() {
 
 	const handleEdit = (item) => {
 		setSelectedRecipeForEdit(item);
-		console.log(item);
-		console.log(subCategories);
 		// Find the subcategory to get the categoryId
 		const subCat = subCategories.find((sub) => sub.id === item.dishesCategoryId);
-		console.log("subCat", subCat);
 		const categoryId = subCat ? subCat.categoryId : "";
-		console.log("categoryId", categoryId);
 		const matchingSubCategory = subCategories.find((sub) => sub.id === item.dishesCategoryId);
-		console.log("matchingSubCategory", matchingSubCategory);
 
 		setFormData({
 			title: item.title || "",
@@ -450,9 +438,7 @@ function Recipes() {
 				path: "dishes/update",
 				payload: dataForm
 			};
-			console.log(data);
 			const response = await ApiService.postRequest(data);
-			console.log(response);
 			if (response && response.status === 200) {
 				alert("Recipe updated successfully!");
 				// Reset form
@@ -481,30 +467,29 @@ function Recipes() {
 	};
 
 	const handleUpdateCategory = async () => {
-	if (!editCategoryForm.title.trim()) return alert("Category name is required.");
+		if (!editCategoryForm.title.trim()) return alert("Category name is required.");
 
-	try {
-		const response = await ApiService.postRequest({
-			path: "categories/updateCategory",
-			payload: {
-				name: editCategoryForm.title,
-				id: selectedCategoryForEdit.id,
-			},
-		});
+		try {
+			const response = await ApiService.postRequest({
+				path: "categories/updateCategory",
+				payload: {
+					name: editCategoryForm.title,
+					id: selectedCategoryForEdit.id
+				}
+			});
 
-		if (response?.status === 200) {
-			alert("Category updated successfully!");
-			setIsEditCategoryModalOpen(false);
-			getCategories();
-		} else {
-			alert("Failed to update category.");
+			if (response?.status === 200) {
+				alert("Category updated successfully!");
+				setIsEditCategoryModalOpen(false);
+				getCategories();
+			} else {
+				alert("Failed to update category.");
+			}
+		} catch (error) {
+			console.error("Error updating category:", error);
+			alert("An error occurred while updating the category.");
 		}
-	} catch (error) {
-		console.error("Error updating category:", error);
-		alert("An error occurred while updating the category.");
-	}
-};
-
+	};
 
 	const handleUpdateSubCategory = async () => {
 		if (!editSubCategoryForm.title.trim()) {
@@ -531,7 +516,7 @@ function Recipes() {
 				setSelectedSubCategoryForEdit(null);
 				setEditSubCategoryForm({ title: "", image: null });
 				// getCategories();
-				getRecepies()
+				getRecepies();
 			} else {
 				alert("Failed to update subcategory.");
 			}
@@ -595,20 +580,19 @@ function Recipes() {
 									<MdEdit
 										className="cursor-pointer pointer-events-auto text-black hover:text-blue-400 transition-colors duration-200 text-sm"
 										onClick={(e) => {
-										e.stopPropagation();
-									    handleEditCategory(category);
+											e.stopPropagation();
+											handleEditCategory(category);
 										}}
-								    />
-								     <div className="w-[1px] h-3 bg-gray-600" /> {/* Divider line */}
+									/>
+									<div className="w-[1px] h-3 bg-gray-600" /> {/* Divider line */}
 									<MdDelete
 										className="cursor-pointer text-black pointer-events-auto hover:text-red-400 transition-colors duration-200 text-sm"
 										onClick={(e) => {
-										e.stopPropagation();
-										handleDeleteCategory(category.id);
-									    }}
+											e.stopPropagation();
+											handleDeleteCategory(category.id);
+										}}
 									/>
 								</div>
-
 							</div>
 						))}
 					</div>
@@ -646,7 +630,7 @@ function Recipes() {
 													handleEditSubCategory(subCat);
 												}}
 											/>
-											 <div className="w-[1px] h-3 bg-gray-600" /> {/* Divider line */}
+											<div className="w-[1px] h-3 bg-gray-600" /> {/* Divider line */}
 											<MdDelete
 												className="cursor-pointer text-black pointer-events-auto hover:text-red-400 transition-colors duration-200 text-sm"
 												onClick={(e) => {
@@ -895,9 +879,9 @@ function Recipes() {
 								<label className="text-lg font-semibold text-gray-800">Category:</label>
 								<p className="text-base text-gray-900 bg-gray-100 p-3 rounded-lg shadow-inner">
 									{(() => {
-										const subCat = subCategories.find(sub => sub.id === selectedRecipe.dishesCategoryId);
-										const category = subCat ? categories.find(cat => cat.id === subCat.categoryId) : null;
-										return category ? category.title : 'N/A';
+										const subCat = subCategories.find((sub) => sub.id === selectedRecipe.dishesCategoryId);
+										const category = subCat ? categories.find((cat) => cat.id === subCat.categoryId) : null;
+										return category ? category.title : "N/A";
 									})()}
 								</p>
 							</div>
@@ -905,8 +889,8 @@ function Recipes() {
 								<label className="text-lg font-semibold text-gray-800">Subcategory:</label>
 								<p className="text-base text-gray-900 bg-gray-100 p-3 rounded-lg shadow-inner">
 									{(() => {
-										const subCat = subCategories.find(sub => sub.id === selectedRecipe.dishesCategoryId);
-										return subCat ? subCat.title : 'N/A';
+										const subCat = subCategories.find((sub) => sub.id === selectedRecipe.dishesCategoryId);
+										return subCat ? subCat.title : "N/A";
 									})()}
 								</p>
 							</div>
@@ -930,22 +914,28 @@ function Recipes() {
 								{(() => {
 									const nutritions = parseNutritions(selectedRecipe.nutritions);
 									const nutritionMap = {
-										cal: { label: 'Calories', color: 'blue' },
-										protein: { label: 'Protein', color: 'green' },
-										carbs: { label: 'Carbs', color: 'yellow' },
-										fats: { label: 'Fat', color: 'red' },
+										cal: { label: "Calories", color: "blue" },
+										protein: { label: "Protein", color: "green" },
+										carbs: { label: "Carbs", color: "yellow" },
+										fats: { label: "Fat", color: "red" }
 									};
 									return Object.entries(nutritions).map(([key, value]) => {
-										const mapping = nutritionMap[key] || { label: key.charAt(0).toUpperCase() + key.slice(1), color: 'gray' };
+										const mapping = nutritionMap[key] || {
+											label: key.charAt(0).toUpperCase() + key.slice(1),
+											color: "gray"
+										};
 										const colorClasses = {
-											blue: 'bg-blue-100 text-blue-700 text-blue-800',
-											green: 'bg-green-100 text-green-700 text-green-800',
-											yellow: 'bg-yellow-100 text-yellow-700 text-yellow-800',
-											red: 'bg-red-100 text-red-700 text-red-800',
-											gray: 'bg-gray-100 text-gray-700 text-gray-800',
+											blue: "bg-blue-100 text-blue-700 text-blue-800",
+											green: "bg-green-100 text-green-700 text-green-800",
+											yellow: "bg-yellow-100 text-yellow-700 text-yellow-800",
+											red: "bg-red-100 text-red-700 text-red-800",
+											gray: "bg-gray-100 text-gray-700 text-gray-800"
 										};
 										return (
-											<div key={key} className={`flex flex-col items-center p-5 rounded-xl shadow-md ${colorClasses[mapping.color]}`}>
+											<div
+												key={key}
+												className={`flex flex-col items-center p-5 rounded-xl shadow-md ${colorClasses[mapping.color]}`}
+											>
 												<label className={`text-base font-semibold`}>{mapping.label}</label>
 												<p className={`text-2xl font-extrabold`}>{value} g</p>
 											</div>
@@ -1029,7 +1019,9 @@ function Recipes() {
 						<label className="text-lg font-normal text-gray-600">Upload Image (optional):</label>
 						<ImgUploader
 							onFileSelect={(file) => setEditSubCategoryForm({ ...editSubCategoryForm, image: file })}
-							existingImage={selectedSubCategoryForEdit ? import.meta.env.VITE_VideoBaseURL + selectedSubCategoryForEdit.image : null}
+							existingImage={
+								selectedSubCategoryForEdit ? import.meta.env.VITE_VideoBaseURL + selectedSubCategoryForEdit.image : null
+							}
 						/>
 					</div>
 				</div>

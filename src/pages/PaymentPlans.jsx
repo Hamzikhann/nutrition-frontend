@@ -84,7 +84,6 @@ function PaymentPlans() {
 				payload: {}
 			};
 			const response = await ApiService.postRequest(data);
-			console.log(response);
 			if (response && response.data) {
 				setPaymentMethods(response.data.data);
 			}

@@ -130,9 +130,13 @@ function HowToUse() {
 	};
 
 	const handleEditContent = (item) => {
-		console.log(item);
 		setSelectedContent(item);
-		setContentForm({ categoryId: item.howTouseCategoryId, title: item.title, description: item.description || "", video: item.media || "" });
+		setContentForm({
+			categoryId: item.howTouseCategoryId,
+			title: item.title,
+			description: item.description || "",
+			video: item.media || ""
+		});
 		setFile(null);
 		setIsEditMode(true);
 		setIsContentModalOpen(true);

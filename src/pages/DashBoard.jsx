@@ -107,7 +107,6 @@ const Dashboard = () => {
 			};
 
 			const response = await ApiService.postRequest(data);
-			console.log(response);
 			if (response && response.data) {
 				setDashboardData(response.data.data);
 			}
@@ -124,7 +123,6 @@ const Dashboard = () => {
 			};
 
 			let res = await ApiService.postRequest(data);
-			console.log(res);
 			if (res) {
 				setLineChartData(res.data.data);
 			}

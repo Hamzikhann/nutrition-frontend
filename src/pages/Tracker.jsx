@@ -7,6 +7,7 @@ import Card from "../components/Card";
 import { IoMdAdd } from "react-icons/io";
 import ApiService from "../services/ApiServices";
 import Inputs from "../components/Inputs";
+import { toast } from "react-toastify";
 
 function Tracker() {
 	const statuses = ["HighLights", "Habits"];
@@ -74,7 +75,7 @@ function Tracker() {
 		try {
 			let data = { path: "habits/list", payload: {} };
 			let response = await ApiService.postRequest(data);
-			if (response) console.log(response);
+			if (response) toast.success("Habits Retrived");
 			setHabits(response.data.data.habits);
 		} catch (error) {
 			console.log(error);
@@ -85,7 +86,7 @@ function Tracker() {
 		try {
 			let data = { path: "highlights/list", payload: {} };
 			let response = await ApiService.postRequest(data);
-			if (response) console.log(response);
+			if (response) toast.success("Highlights Retrived");
 			setHighlights(response.data.data);
 		} catch (error) {
 			console.log(error);
@@ -129,7 +130,6 @@ function Tracker() {
 	};
 
 	const handleEditHabit = (habit) => {
-		console.log(habit);
 		setSelectedItem(habit);
 		setFormData({
 			id: habit.id,
@@ -242,7 +242,6 @@ function Tracker() {
 			dataForm.append(field.name, formData[field.name]);
 		});
 
-		console.log(dataForm);
 		// Send to backend
 		let path;
 		if (isEditMode) {
@@ -257,8 +256,6 @@ function Tracker() {
 		};
 
 		let response = await ApiService.postRequest(data);
-
-		console.log(response);
 
 		if (response.data) {
 			if (activeTab === "HighLights") {
@@ -318,7 +315,6 @@ function Tracker() {
 			dataForm.append(key, itemFormData[key]);
 		});
 
-		console.log(dataForm);
 		// Send to backend
 		let path;
 		if (isEditItemMode) {
@@ -334,8 +330,6 @@ function Tracker() {
 		};
 
 		let response = await ApiService.postRequest(data);
-
-		console.log(response);
 
 		if (response) {
 			if (isEditItemMode) {
@@ -386,7 +380,6 @@ function Tracker() {
 			payload: formData
 		};
 
-		console.log(data);
 		const response = await ApiService.postRequest(data);
 		// setHighlights(response.data.data);
 		if (response) {

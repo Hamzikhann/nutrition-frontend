@@ -108,6 +108,8 @@ function Moderators() {
 	};
 
 	const handleSubmit = async (e) => {
+		if (e && e.preventDefault) e.preventDefault();
+
 		// e.preventDefault();
 		if (!validateForm()) return;
 
@@ -129,7 +131,6 @@ function Moderators() {
 			}
 
 			const response = await ApiService.postRequest(data);
-			console.log(response);
 			if (response && response.data) {
 				getModerators();
 				setIsModalOpen(false);

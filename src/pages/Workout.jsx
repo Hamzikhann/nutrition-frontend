@@ -44,11 +44,14 @@ function Workout() {
 	const [exerciseToDelete, setExerciseToDelete] = useState(null);
 	const [isDeleteWorkoutModalOpen, setIsDeleteWorkoutModalOpen] = useState(false);
 	const [workoutToDelete, setWorkoutToDelete] = useState(null);
+	const [workoutToEdit, setWorkoutToEdit] = useState(null);
+	const [workoutToEditModel, setIsWorkoutToEditModel] = useState(false);
 	const [isWeekModalOpen, setIsWeekModalOpen] = useState(false);
 	const [weekForm, setWeekForm] = useState({
 		planId: "",
 		numWeeks: 0
 	});
+	const [isLoadingUpdateWorkout, setIsLoadingUpdateWorkout] = useState(false);
 
 	let exerciseFields = [
 		{ name: "name", label: "Title", type: "text", placeholder: "Enter title" },
@@ -84,15 +87,42 @@ function Workout() {
 		[weeks, days, workoutForms.weekId, exercise]
 	);
 
+	const workoutFieldsUpdate = useMemo(
+		() => [
+			{
+				name: "weekId",
+				label: "Select Weeks",
+				type: "select",
+				placeholder: "Select Week",
+				options: weeks.map((w) => ({ id: w.id, title: w.title }))
+			},
+			{
+				name: "workoutDayId",
+				label: "Select Days",
+				type: "select",
+				placeholder: "Select Day",
+				options: days.filter((d) => d.weekId === workoutToEdit?.weekId).map((d) => ({ id: d.id, title: d.title }))
+			},
+			{
+				name: "exerciseId",
+				label: "Select Exercise",
+				type: "select",
+				placeholder: "Select Exercise",
+				options: exerciseOptions
+			},
+			{ name: "sets", label: "Sets", type: "number", placeholder: "Enter sets" },
+			{ name: "reps", label: "Reps", type: "number", placeholder: "Enter reps" }
+		],
+		[weeks, days, workoutToEdit?.weekId, exerciseOptions]
+	);
+
 	const getWorkouts = useCallback(async () => {
-		console.log(selectedWeek);
 		if (!selectedWeek) return;
 		let data = {
 			path: "workout/detail",
 			payload: { weekId: selectedWeek }
 		};
 		let res = await ApiService.postRequest(data);
-		console.log(res);
 		if (res.data && res.data.data) {
 			setSelectedWeekData(res.data.data);
 			if (res.data.data.workoutDays && res.data.data.workoutDays.length > 0) {
@@ -107,7 +137,6 @@ function Workout() {
 			payload: {}
 		};
 		let res = await ApiService.postRequest(data);
-		console.log(res);
 		setWeeks(res.data.data);
 		// return statuses.map((status) => status);
 	}, []);
@@ -119,7 +148,6 @@ function Workout() {
 			payload: {}
 		};
 		let res = await ApiService.postRequest(data);
-		console.log(res);
 		setDays(res.data.data);
 		// return statuses.map((status) => status);
 	}, [selectedWeek]);
@@ -132,7 +160,6 @@ function Workout() {
 
 		let res = await ApiService.postRequest(data);
 
-		console.log(res);
 		setAllExercise(res.data.data);
 		setExerciseOptions(res.data.data.map((e) => ({ id: e.id, title: e.name })));
 	}, []);
@@ -170,7 +197,6 @@ function Workout() {
 			};
 
 			let res = await ApiService.postRequest(data);
-			console.log(res);
 			if (res) {
 				// Reset form and close modal
 				setWorkoutForms({ weekId: "", workoutDayId: "", exerciseId: "", sets: "", reps: "" });
@@ -219,7 +245,6 @@ function Workout() {
 
 			let res = await ApiService.postRequest(data);
 
-			console.log(res);
 			if (res.data) {
 				setExercise({ name: "", description: "", video: "" });
 				setFile("");
@@ -276,7 +301,6 @@ function Workout() {
 
 			let res = await ApiService.postRequest(data);
 
-			console.log(res);
 			if (res.data) {
 				setExercise({ name: "", description: "", video: "" });
 				setFile("");
@@ -339,7 +363,6 @@ function Workout() {
 				}
 			};
 			let res = await ApiService.postRequest(data);
-			console.log(res);
 			if (res) {
 				toast.success("Week created successfully!");
 			}
@@ -363,6 +386,78 @@ function Workout() {
 
 	const onSelectWeek = (weekId) => {
 		setSelectedWeek(weekId);
+	};
+
+	const validateUpdateWorkout = (workoutData) => {
+		let errors = {};
+		if (!workoutData.weekId) errors.weekId = "Please select a week.";
+		if (!workoutData.workoutDayId) errors.workoutDayId = "Please select a day.";
+		if (!workoutData.exerciseId) errors.exerciseId = "Please select an exercise.";
+		if (!workoutData.sets || isNaN(workoutData.sets) || workoutData.sets <= 0)
+			errors.sets = "Please enter a valid number of sets.";
+		if (!workoutData.reps || isNaN(workoutData.reps) || workoutData.reps <= 0)
+			errors.reps = "Please enter a valid number of reps.";
+		return errors;
+	};
+
+	const updateWorkout = async () => {
+		if (!workoutToEdit) return;
+
+		const errors = validateUpdateWorkout(workoutToEdit);
+		if (Object.keys(errors).length > 0) {
+			setWorkoutErrors(errors);
+			return;
+		}
+
+		setWorkoutErrors({});
+		setIsLoadingUpdateWorkout(true);
+
+		try {
+			let data = {
+				path: "workout/update",
+				payload: {
+					id: workoutToEdit.id,
+					weekId: workoutToEdit.weekId,
+					workoutDayId: workoutToEdit.workoutDayId,
+					exerciseId: workoutToEdit.exerciseId,
+					sets: workoutToEdit.sets,
+					reps: workoutToEdit.reps
+				}
+			};
+
+			let res = await ApiService.postRequest(data);
+			if (res) {
+				// Reset and close modal
+				setWorkoutToEdit(null);
+				setIsWorkoutToEditModel(false);
+				// Refresh data
+				getWorkouts();
+				toast.success("Workout updated successfully!");
+			}
+		} catch (error) {
+			console.log(error);
+			setWorkoutErrors({ general: "Failed to update workout. Please try again." });
+		} finally {
+			setIsLoadingUpdateWorkout(false);
+		}
+	};
+
+	const handelEditWorkOut = (workoutDayExercise) => {
+		// We know the current context:
+		// - selectedWeekData contains the week ID
+		// - selectedDay contains the current day ID
+		// - workoutDayExercise contains the exercise relationship
+
+		setWorkoutToEdit({
+			id: workoutDayExercise.id, // workoutDayExercise ID
+			weekId: selectedWeekData?.id || selectedWeek || "", // From current week context
+			workoutDayId: selectedDay || "", // From current selected day
+			exerciseId: workoutDayExercise.exercise?.id || "", // From nested exercise
+			sets: workoutDayExercise.sets?.toString() || "",
+			reps: workoutDayExercise.reps?.toString() || ""
+		});
+
+		setIsWorkoutToEditModel(true);
 	};
 
 	return (
@@ -446,6 +541,7 @@ function Workout() {
 										reps={exercise.reps}
 										video={import.meta.env.VITE_VideoBaseURL + exercise.exercise.videoURL || hightLightpic}
 										onDelete={() => handleDeleteWorkout(exercise)}
+										onEdit={() => handelEditWorkOut(exercise)}
 									/>
 								))}
 						</div>
@@ -729,6 +825,30 @@ function Workout() {
 							className="w-full py-3 px-4 rounded-lg text-sm bg-gray-100 border border-gray-300 focus:outline-none focus:border-[#46acbe]"
 						/>
 					</div>
+				</div>
+			</Modal>
+
+			<Modal
+				isOpen={workoutToEditModel}
+				onClose={() => setIsWorkoutToEditModel(false)}
+				title="Update Workout"
+				showTitle={true}
+				showCloseIcon={true}
+				showDivider={true}
+				width="min-w-[300px] max-w-2xl"
+				secondaryBtnText="Cancel"
+				primaryBtnText={isLoadingUpdateWorkout ? "Updating..." : "Update"}
+				onPrimaryClick={updateWorkout}
+				primaryBtnDisabled={isLoadingUpdateWorkout}
+			>
+				<div className="flex flex-col gap-4 pb-4">
+					<Inputs
+						fields={workoutFieldsUpdate}
+						formData={workoutToEdit}
+						setFormData={setWorkoutToEdit}
+						errors={workoutErrors}
+					/>
+					{workoutErrors.general && <p className="text-red-500 text-sm">{workoutErrors.general}</p>}
 				</div>
 			</Modal>
 		</>

@@ -4,7 +4,7 @@ import { FaCirclePlay } from "react-icons/fa6";
 function Card({ name, date, pic, setSelected, setIsViewModalOpen, item, handleDelete, handleEdit }) {
 	const [open, setOpen] = useState(false);
 	const dropdownRef = useRef(null);
-	console.log(typeof handleEdit);
+	typeof handleEdit;
 
 	useEffect(() => {
 		const handleClickOutside = (event) => {

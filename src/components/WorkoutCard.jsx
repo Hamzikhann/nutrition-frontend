@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import { FaCirclePlay } from "react-icons/fa6";
 import Modal from "./Modal";
 
-function WorkoutCard({ name, video, sets, reps, onDelete }) {
-	console.log(video);
+function WorkoutCard({ name, video, sets, reps, onDelete, onEdit }) {
 	const [open, setOpen] = useState(false);
 	return (
 		<>
@@ -33,6 +32,10 @@ function WorkoutCard({ name, video, sets, reps, onDelete }) {
 							{open && (
 								<div className="absolute right-0 top-6 bg-white shadow-lg rounded-lg w-28 flex flex-col text-sm z-10">
 									{/* <button className="px-4 py-2 hover:bg-gray-100 text-left">Edit</button> */}
+									<button className="px-4 py-2 hover:bg-gray-100 text-left text-red-500" onClick={onEdit}>
+										Edit
+									</button>
+
 									<button className="px-4 py-2 hover:bg-gray-100 text-left text-red-500" onClick={onDelete}>
 										Delete
 									</button>

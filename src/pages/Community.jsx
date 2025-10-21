@@ -13,6 +13,7 @@ import { RiMenuFold4Fill } from "react-icons/ri";
 import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
 import ApiService from "../services/ApiServices";
 import { formatToLocalTime } from "../services/Timezone";
+import { toast } from "react-toastify";
 
 function Community() {
 	const adminId = "UWRuejBBVlRwcm9xaEpoaFhoK2hEUT09";
@@ -74,7 +75,6 @@ function Community() {
 			};
 
 			const res = await ApiService.postRequest(data);
-			console.log(res);
 			res.data.categories.forEach((e) => {
 				e.color;
 			});
@@ -108,7 +108,6 @@ function Community() {
 				payload: groupForm
 			};
 			const res = await ApiService.postRequest(data);
-			console.log(res);
 			if (res) {
 				getCommunityGroups();
 				setGroupForm({
@@ -118,7 +117,7 @@ function Community() {
 				setIsGroupOpen(false);
 			}
 		} catch (error) {
-			console.log(error);
+			toast.error(error);
 		}
 	};
 
@@ -129,7 +128,6 @@ function Community() {
 				payload: { ...groupForm, id: groupToEdit.id }
 			};
 			const res = await ApiService.postRequest(data);
-			console.log(res);
 			if (res) {
 				getCommunityGroups();
 				setGroupForm({
@@ -140,7 +138,7 @@ function Community() {
 				setGroupToEdit(null);
 			}
 		} catch (error) {
-			console.log(error);
+			toast.error(error);
 		}
 	};
 
@@ -151,7 +149,6 @@ function Community() {
 				payload: { id: groupToDeleteId }
 			};
 			const res = await ApiService.postRequest(data);
-			console.log(res);
 			if (res) {
 				getCommunityGroups();
 				setIsDeleteGroupModalOpen(false);
@@ -161,7 +158,7 @@ function Community() {
 				}
 			}
 		} catch (error) {
-			console.log(error);
+			toast.error(error);
 		}
 	};
 
@@ -172,7 +169,6 @@ function Community() {
 				payload: { commentId, comment: newComment }
 			};
 			const res = await ApiService.postRequest(data);
-			console.log(res);
 			if (res) {
 				// Update the comment in state
 				setPosts((prev) =>
@@ -185,7 +181,7 @@ function Community() {
 				setEditCommentText("");
 			}
 		} catch (error) {
-			console.log(error);
+			toast.error(error);
 		}
 	};
 
@@ -196,7 +192,6 @@ function Community() {
 				payload: { commentId }
 			};
 			const res = await ApiService.postRequest(data);
-			console.log(res);
 			if (res) {
 				// Remove the comment from state
 				setPosts((prev) =>
@@ -214,9 +209,6 @@ function Community() {
 	const editPost = async () => {
 		try {
 			let formData = new FormData();
-
-			console.log("editFiles:", editFiles);
-			console.log("imagesToRemove:", imagesToRemove);
 
 			// Handle multiple files
 			if (editFiles && editFiles.length > 0) {
@@ -248,10 +240,8 @@ function Community() {
 				payload: formData
 			};
 
-			console.log("Sending data:", data);
 			let res = await ApiService.postRequest(data);
 
-			console.log(res);
 			if (res) {
 				// Refresh posts to get updated data
 				await getPosts(selectedGroup);
@@ -304,9 +294,12 @@ function Community() {
 	}, []);
 
 	// Function to check if post has admin comment
-	const hasAdminComment = useCallback((post) => {
-		return post.comments.some(comment => comment.userId === adminId);
-	}, [adminId]);
+	const hasAdminComment = useCallback(
+		(post) => {
+			return post.comments.some((comment) => comment.userId === adminId);
+		},
+		[adminId]
+	);
 
 	// Filtered posts based on date and answer filters
 	const filteredPosts = useMemo(() => {
@@ -315,30 +308,33 @@ function Community() {
 		// Date filter
 		if (dateFilter) {
 			// Create date in local timezone to avoid UTC conversion issues
-			const selectedDate = new Date(dateFilter + 'T12:00:00'); // Use noon to avoid timezone issues
+			const selectedDate = new Date(dateFilter + "T12:00:00"); // Use noon to avoid timezone issues
 			// Get local date string instead of UTC
-			const selectedDateString = selectedDate.getFullYear() + '-' +
-				String(selectedDate.getMonth() + 1).padStart(2, '0') + '-' +
-				String(selectedDate.getDate()).padStart(2, '0');
+			const selectedDateString =
+				selectedDate.getFullYear() +
+				"-" +
+				String(selectedDate.getMonth() + 1).padStart(2, "0") +
+				"-" +
+				String(selectedDate.getDate()).padStart(2, "0");
 
-			filtered = filtered.filter(post => {
+			filtered = filtered.filter((post) => {
 				// Parse the date string properly (handles formats like "2025-10-16 01:10:13" or "16/10/2025, 01:10 am")
 				let postDate;
 				try {
 					let dateStr = post.createdAt;
 
 					// Handle different date formats
-					if (dateStr.includes('/')) {
+					if (dateStr.includes("/")) {
 						// Handle format like "16/10/2025, 01:10 am"
-						const parts = dateStr.split(',')[0].split('/');
+						const parts = dateStr.split(",")[0].split("/");
 						if (parts.length === 3) {
 							// Convert DD/MM/YYYY to YYYY-MM-DD
-							dateStr = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+							dateStr = `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
 						}
 					}
 
 					// Try parsing as ISO string first
-					postDate = new Date(dateStr.replace(' ', 'T'));
+					postDate = new Date(dateStr.replace(" ", "T"));
 					if (isNaN(postDate.getTime())) {
 						// Fallback to direct parsing
 						postDate = new Date(dateStr);
@@ -349,17 +345,18 @@ function Community() {
 						return false;
 					}
 				} catch (error) {
+					console.log(error);
 					return false;
 				}
 
-				const postDateString = postDate.toISOString().split('T')[0];
+				const postDateString = postDate.toISOString().split("T")[0];
 				return postDateString === selectedDateString;
 			});
 		}
 
 		// Answer filter
 		if (answerFilter !== "all" && allCommentsFetched) {
-			filtered = filtered.filter(post => {
+			filtered = filtered.filter((post) => {
 				const hasAdmin = hasAdminComment(post);
 				if (answerFilter === "answered") {
 					return hasAdmin;
@@ -422,7 +419,7 @@ function Community() {
 		const results = await Promise.all(promises);
 		setPosts((prev) =>
 			prev.map((p, i) => {
-				const result = results.find(r => r && r.index === i);
+				const result = results.find((r) => r && r.index === i);
 				return result ? { ...p, comments: result.comments } : p;
 			})
 		);
@@ -490,7 +487,6 @@ function Community() {
 
 			let res = await ApiService.postRequest(data);
 
-			console.log(res);
 			if (res) {
 				getPosts(postForm.categoryId);
 				setPostForm({
@@ -516,15 +512,13 @@ function Community() {
 				}
 			};
 
-			let res = await ApiService.postRequest(data);
-			console.log(res);
+			await ApiService.postRequest(data);
 		} catch (error) {
 			console.log(error);
 		}
 	};
 
 	const confirmDelete = async () => {
-		console.log(postToDeleteId);
 		if (postToDeleteId) {
 			await deletePost(postToDeleteId);
 			getPosts(selectedGroup);
@@ -567,19 +561,17 @@ function Community() {
 		return existingImages;
 	};
 
-			// Usage in modal
-			<MultiImgUploader
-				onFileSelect={setEditFiles}
-				existingImages={getExistingImages()}
-				onRemoveExisting={(imageId) => {
-					console.log("Removing image with ID:", imageId);
-					setImagesToRemove((prev) => {
-						const newList = [...prev, imageId];
-						console.log("Updated imagesToRemove:", newList);
-						return newList;
-					});
-				}}
-			/>;
+	// Usage in modal
+	<MultiImgUploader
+		onFileSelect={setEditFiles}
+		existingImages={getExistingImages()}
+		onRemoveExisting={(imageId) => {
+			setImagesToRemove((prev) => {
+				const newList = [...prev, imageId];
+				return newList;
+			});
+		}}
+	/>;
 
 	return (
 		<>
@@ -612,7 +604,7 @@ function Community() {
 						<Searchbar placeholder="Search groups..." minWidth="200px" bgColor="bg-gray-100" />
 					</div>
 
-					<div className="flex flex-col gap-4 px-4">
+					{/* <div className="flex flex-col gap-4 px-4">
 						{groups.map((group, index) => (
 							<div key={index} className="flex items-center gap-3 cursor-pointer group">
 								<div onClick={() => setSelectedGroup(group.id)} className="flex items-center gap-3 flex-1">
@@ -641,6 +633,63 @@ function Community() {
 											setIsDeleteGroupModalOpen(true);
 										}}
 										className="text-red-500 hover:underline text-sm"
+									>
+										Delete
+									</button>
+								</div>
+							</div>
+						))}
+					</div> */}
+
+					<div className="flex flex-col gap-4 px-4">
+						{groups.map((group, index) => (
+							<div
+								key={index}
+								className={`flex items-center gap-3 cursor-pointer group p-3 rounded-lg transition-all duration-200 ${
+									selectedGroup === group.id ? "bg-[#46abbd] text-white" : "hover:bg-gray-100"
+								}`}
+								onClick={() => setSelectedGroup(group.id)}
+							>
+								<div className="flex items-center gap-3 flex-1">
+									<div
+										className={`p-2 rounded-full ${group?.color ? group.color : "bg-blue-500"} ${
+											selectedGroup === group.id ? "ring-2 ring-white" : ""
+										}`}
+									></div>
+									<div>
+										<h1 className="text-lg font-semibold">{group.title}</h1>
+										<p className="flex items-center gap-1 text-sm opacity-80">
+											<LuUsers /> <span>{group?.members ? group?.members : 0}</span> Members
+										</p>
+									</div>
+								</div>
+								<div
+									className={`flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity ${
+										selectedGroup === group.id ? "opacity-100" : ""
+									}`}
+								>
+									<button
+										onClick={(e) => {
+											e.stopPropagation();
+											setGroupToEdit(group);
+											setGroupForm({ title: group.title, privacy: group.privacy });
+											setIsEditGroupOpen(true);
+										}}
+										className={`text-sm hover:underline ${
+											selectedGroup === group.id ? "bg-white text-[#46abbd] px-2 py-1 rounded" : "text-blue-500"
+										}`}
+									>
+										Edit
+									</button>
+									<button
+										onClick={(e) => {
+											e.stopPropagation();
+											setGroupToDeleteId(group.id);
+											setIsDeleteGroupModalOpen(true);
+										}}
+										className={`text-sm hover:underline ${
+											selectedGroup === group.id ? "bg-white text-red-500 px-2 py-1 rounded" : "text-red-500"
+										}`}
 									>
 										Delete
 									</button>
@@ -1218,18 +1267,21 @@ function Community() {
 									)}
 
 									{/* Show multiple images from communityPostMedia not marked for removal */}
-									{postToEdit?.communityPostMedia?.map((media) => (
-										!imagesToRemove.includes(media.id) && (
-											<div key={media.id} className="relative">
-												<img
-													src={import.meta.env.VITE_VideoBaseURL + media.media}
-													alt="Post media"
-													className="w-20 h-20 object-cover rounded-lg border border-gray-300"
-												/>
-												<span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs px-1 rounded">New</span>
-											</div>
-										)
-									))}
+									{postToEdit?.communityPostMedia?.map(
+										(media) =>
+											!imagesToRemove.includes(media.id) && (
+												<div key={media.id} className="relative">
+													<img
+														src={import.meta.env.VITE_VideoBaseURL + media.media}
+														alt="Post media"
+														className="w-20 h-20 object-cover rounded-lg border border-gray-300"
+													/>
+													<span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs px-1 rounded">
+														New
+													</span>
+												</div>
+											)
+									)}
 								</div>
 								<p className="text-xs text-gray-500 mt-1">Note: New images will be added to existing ones</p>
 							</div>

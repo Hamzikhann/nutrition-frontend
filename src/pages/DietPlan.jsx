@@ -200,7 +200,7 @@ function DietPlan() {
 					payload: { id: subCategoryId }
 				};
 				const response = await ApiService.postRequest(data);
-				if (response ) {
+				if (response) {
 					alert("Subcategory deleted successfully!");
 					getDietPlans();
 				} else {
@@ -262,15 +262,7 @@ function DietPlan() {
 
 	const handleEditDietPlan = (item) => {
 		setSelectedDietPlanForEdit(item);
-		console.log("item", item);
 		const kcalArray = item.kcalOptions ? item.kcalOptions.replace(/"/g, "").split(",") : [];
-
-		// const subCat = subCategories.find((sub) => sub.id === item.dishesCategoryId);
-		// console.log("subCat", subCat);
-		// const categoryId = subCat ? subCat.categoryId : "";
-		// console.log("categoryId", categoryId);
-		// const matchingSubCategory = subCategories.find((sub) => sub.id === item.dishesCategoryId);
-		// console.log("matchingSubCategory", matchingSubCategory);
 
 		setSelectedKcal(kcalArray);
 		setFormData({
@@ -364,30 +356,30 @@ function DietPlan() {
 		}
 	};
 
-		const handleUpdateCategory = async () => {
-	if (!editCategoryForm.title.trim()) return alert("Category name is required.");
+	const handleUpdateCategory = async () => {
+		if (!editCategoryForm.title.trim()) return alert("Category name is required.");
 
-	try {
-		const response = await ApiService.postRequest({
-			path: "categories/updateCategory",
-			payload: {
-				name: editCategoryForm.title,
-				id: selectedCategoryForEdit.id,
-			},
-		});
+		try {
+			const response = await ApiService.postRequest({
+				path: "categories/updateCategory",
+				payload: {
+					name: editCategoryForm.title,
+					id: selectedCategoryForEdit.id
+				}
+			});
 
-		if (response?.status === 200) {
-			alert("Category updated successfully!");
-			setIsEditCategoryModalOpen(false);
-			getCategories();
-		} else {
-			alert("Failed to update category.");
+			if (response?.status === 200) {
+				alert("Category updated successfully!");
+				setIsEditCategoryModalOpen(false);
+				getCategories();
+			} else {
+				alert("Failed to update category.");
+			}
+		} catch (error) {
+			console.error("Error updating category:", error);
+			alert("An error occurred while updating the category.");
 		}
-	} catch (error) {
-		console.error("Error updating category:", error);
-		alert("An error occurred while updating the category.");
-	}
-};
+	};
 
 	const handleUpdateSubCategory = async () => {
 		if (!editSubCategoryForm.title.trim()) {
@@ -537,22 +529,22 @@ function DietPlan() {
 								)}
 								{/* Tooltip */}
 								<div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gray-200 backdrop-blur-sm text-white text-xs rounded-lg px-3 py-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 flex gap-3 items-center shadow-lg border border-gray-700 pointer-events-none">
-																	<MdEdit
-																		className="cursor-pointer pointer-events-auto text-black hover:text-blue-400 transition-colors duration-200 text-sm"
-																		onClick={(e) => {
-																		e.stopPropagation();
-																		handleEditCategory(category);
-																		}}
-																	/>
-																	 <div className="w-[1px] h-3 bg-gray-600" /> {/* Divider line */}
-																	<MdDelete
-																		className="cursor-pointer text-black pointer-events-auto hover:text-red-400 transition-colors duration-200 text-sm"
-																		onClick={(e) => {
-																		e.stopPropagation();
-																		handleDeleteCategory(category.id);
-																		}}
-																	/>
-																</div>
+									<MdEdit
+										className="cursor-pointer pointer-events-auto text-black hover:text-blue-400 transition-colors duration-200 text-sm"
+										onClick={(e) => {
+											e.stopPropagation();
+											handleEditCategory(category);
+										}}
+									/>
+									<div className="w-[1px] h-3 bg-gray-600" /> {/* Divider line */}
+									<MdDelete
+										className="cursor-pointer text-black pointer-events-auto hover:text-red-400 transition-colors duration-200 text-sm"
+										onClick={(e) => {
+											e.stopPropagation();
+											handleDeleteCategory(category.id);
+										}}
+									/>
+								</div>
 							</div>
 						))}
 					</div>
@@ -612,24 +604,23 @@ function DietPlan() {
 															)}
 															{/* Tooltip */}
 															{subCat && (
-																
 																<div className="absolute top-9 left-1/2 -translate-x-1/2 bg-gray-200 backdrop-blur-sm text-white text-xs rounded-lg px-3 py-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 flex gap-3 items-center shadow-lg border border-gray-700 pointer-events-none">
-																											<MdEdit
-																												className="cursor-pointer pointer-events-auto text-black hover:text-blue-400 transition-colors duration-200 text-sm"
-																												onClick={(e) => {
-																													e.stopPropagation();
-																													handleEditSubCategory(subCat);
-																												}}
-																											/>
-																											 <div className="w-[1px] h-3 bg-gray-600" /> {/* Divider line */}
-																											<MdDelete
-																												className="cursor-pointer text-black pointer-events-auto hover:text-red-400 transition-colors duration-200 text-sm"
-																												onClick={(e) => {
-																													e.stopPropagation();
-																													handleDeleteSubCategory(subCat.id);
-																												}}
-																											/>
-																										</div>
+																	<MdEdit
+																		className="cursor-pointer pointer-events-auto text-black hover:text-blue-400 transition-colors duration-200 text-sm"
+																		onClick={(e) => {
+																			e.stopPropagation();
+																			handleEditSubCategory(subCat);
+																		}}
+																	/>
+																	<div className="w-[1px] h-3 bg-gray-600" /> {/* Divider line */}
+																	<MdDelete
+																		className="cursor-pointer text-black pointer-events-auto hover:text-red-400 transition-colors duration-200 text-sm"
+																		onClick={(e) => {
+																			e.stopPropagation();
+																			handleDeleteSubCategory(subCat.id);
+																		}}
+																	/>
+																</div>
 															)}
 														</div>
 													);
@@ -1502,7 +1493,9 @@ function DietPlan() {
 						<label className="text-lg font-normal text-gray-600">Upload Image (optional):</label>
 						<ImgUploader
 							onFileSelect={(file) => setEditSubCategoryForm({ ...editSubCategoryForm, image: file })}
-							existingImage={selectedSubCategoryForEdit ? import.meta.env.VITE_VideoBaseURL + selectedSubCategoryForEdit.image : null}
+							existingImage={
+								selectedSubCategoryForEdit ? import.meta.env.VITE_VideoBaseURL + selectedSubCategoryForEdit.image : null
+							}
 						/>
 					</div>
 				</div>

@@ -1,10 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 
 function ImgUploader({ onFileSelect, file, existingImage }) {
-	console.log(onFileSelect, "onFileSelect");
-	console.log(file, "file");
-	console.log(existingImage, "existingImage");
-
 	const [preview, setPreview] = useState(null);
 	const fileInputRef = useRef(null);
 
@@ -39,8 +35,6 @@ function ImgUploader({ onFileSelect, file, existingImage }) {
 
 	const handleFileChange = (e) => {
 		const selectedFile = e.target.files[0];
-		console.log(selectedFile);
-		console.log(URL.createObjectURL(selectedFile));
 		if (selectedFile) {
 			setPreview(URL.createObjectURL(selectedFile));
 			onFileSelect(selectedFile); // pass file up

@@ -9,8 +9,6 @@ function Searchbar({
 	setSearchText
 }) {
 	const handleChange = (e) => {
-		console.log(searchText);
-		console.log(e.target.value);
 		setSearchText(e.target.value);
 	};
 

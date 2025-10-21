@@ -396,7 +396,6 @@ function Users() {
 				payload: {}
 			};
 			let res = await ApiService.postRequest(data);
-			console.log(res);
 			setUsersData(res.data.data);
 		} catch (error) {
 			console.error("Error fetching users:", error);
@@ -1102,9 +1101,7 @@ function Users() {
 							>
 								<IoMdRemove size={24} />
 							</button>
-							<div className="text-3xl font-bold text-[#46abbd] min-w-[100px] text-center">
-								{bmrValue}
-							</div>
+							<div className="text-3xl font-bold text-[#46abbd] min-w-[100px] text-center">{bmrValue}</div>
 							<button
 								onClick={() => handleBmrChange(true)}
 								className="w-12 h-12 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center transition"

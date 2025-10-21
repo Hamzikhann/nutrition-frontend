@@ -2,8 +2,6 @@ import React, { useState } from "react";
 import { IoMdAdd } from "react-icons/io";
 
 const DynamicForm = ({ fields, formData, setFormData, handleAddCategory, handleAddSubCategory, errors = {} }) => {
-	console.log("fields", fields);
-	console.log("formData", formData);
 	const [addMode, setAddMode] = useState({});
 	const [newValue, setNewValue] = useState({});
 	const [customValue, setCustomValue] = useState({});
@@ -30,10 +28,7 @@ const DynamicForm = ({ fields, formData, setFormData, handleAddCategory, handleA
 	};
 
 	const handleSelectChange = (e) => {
-		console.log(e);
 		const { name, value } = e.target;
-		console.log(name);
-		console.log("value", value);
 		if (value === "add_new") {
 			setAddMode((prev) => ({ ...prev, [name]: true }));
 			setNewValue((prev) => ({ ...prev, [name]: "" }));

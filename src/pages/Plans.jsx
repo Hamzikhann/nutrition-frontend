@@ -102,9 +102,7 @@ function Plans() {
 			if (isEditMode) {
 				payload.id = selectedPlan.id;
 			}
-			console.log(data);
 			const res = await ApiService.postRequest(data);
-			console.log(res.data);
 			if (res.data) {
 				setIsModalOpen(false);
 				getPlans();
@@ -276,9 +274,7 @@ function Plans() {
 			center: true,
 			grow: 1,
 			cell: (row) => {
-				console.log(row);
 				const features = JSON.parse(row?.features);
-				console.log(features);
 				if (!features) {
 					return "";
 				}
