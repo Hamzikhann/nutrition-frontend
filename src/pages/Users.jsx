@@ -760,9 +760,9 @@ function Users() {
 				secondaryBtnText="Close"
 			>
 				<div className="flex flex-col gap-6 pb-4">
-					{selectedUser?.userAssesmentForm ? (
+					{selectedUser?.userAssesmentForm || (selectedUser?.userAssesmentProgresses && selectedUser.userAssesmentProgresses.length > 0) ? (
 						<>
-							{selectedUser.userAssesmentForm.file && (
+							{selectedUser.userAssesmentForm?.file && (
 								<div className="flex justify-center mb-4">
 									<a
 										href={selectedUser.userAssesmentForm.file}
@@ -781,8 +781,11 @@ function Users() {
 								</div>
 							)}
 
-							{/* Personal Information */}
-							<div className="bg-gray-50 p-6 rounded-lg shadow-sm">
+							{/* Assessment Form Data - Only show if userAssesmentForm exists */}
+							{selectedUser?.userAssesmentForm && (
+								<>
+									{/* Personal Information */}
+									<div className="bg-gray-50 p-6 rounded-lg shadow-sm">
 								<h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
 									<svg className="w-5 h-5 mr-2 text-[#46abbd]" fill="currentColor" viewBox="0 0 20 20">
 										<path
@@ -954,6 +957,143 @@ function Users() {
 									</div>
 								</div>
 							</div>
+								</>
+							)}
+
+							{/* Assessment Progress */}
+							{selectedUser?.userAssesmentProgresses && selectedUser.userAssesmentProgresses.length > 0 && (
+								<div className="bg-gray-50 p-6 rounded-lg shadow-sm">
+									<h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+										<svg className="w-5 h-5 mr-2 text-[#46abbd]" fill="currentColor" viewBox="0 0 20 20">
+											<path
+												fillRule="evenodd"
+												d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+												clipRule="evenodd"
+											/>
+										</svg>
+										Assessment Progress
+									</h3>
+									{selectedUser.userAssesmentProgresses.map((progress, index) => (
+										<div key={index} className="mb-6 p-4 bg-white rounded-lg shadow-sm">
+											<h4 className="text-md font-semibold text-gray-700 mb-3">Day {progress.dayNumber} Progress</h4>
+											<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+												{/* Basic Weights */}
+												<div className="bg-gray-50 p-3 rounded-md">
+													<label className="text-sm font-medium text-gray-500">Current Weight</label>
+													<p className="text-base text-gray-900 mt-1">{progress.currentWeight || "N/A"}</p>
+												</div>
+												<div className="bg-gray-50 p-3 rounded-md">
+													<label className="text-sm font-medium text-gray-500">Goal Weight</label>
+													<p className="text-base text-gray-900 mt-1">{progress.goalWeight || "N/A"}</p>
+												</div>
+												{/* Problems */}
+												<div className="bg-gray-50 p-3 rounded-md md:col-span-2">
+													<label className="text-sm font-medium text-gray-500">Problems Faced</label>
+													<p className="text-base text-gray-900 mt-1">{progress.problemsFaced || "N/A"}</p>
+												</div>
+												<div className="bg-gray-50 p-3 rounded-md md:col-span-2">
+													<label className="text-sm font-medium text-gray-500">Problems Resolved</label>
+													<p className="text-base text-gray-900 mt-1">{progress.problemsResolved || "N/A"}</p>
+												</div>
+												<div className="bg-gray-50 p-3 rounded-md md:col-span-2">
+													<label className="text-sm font-medium text-gray-500">Diet/Workout Problems</label>
+													<p className="text-base text-gray-900 mt-1">{progress.dietWorkoutProblems || "N/A"}</p>
+												</div>
+												{/* Positive Changes */}
+												<div className="bg-gray-50 p-3 rounded-md md:col-span-2">
+													<label className="text-sm font-medium text-gray-500">Positive Changes</label>
+													<p className="text-base text-gray-900 mt-1">{progress.positiveChanges || "N/A"}</p>
+												</div>
+												<div className="bg-gray-50 p-3 rounded-md md:col-span-2">
+													<label className="text-sm font-medium text-gray-500">Habits Included</label>
+													<p className="text-base text-gray-900 mt-1">{progress.habitsIncluded || "N/A"}</p>
+												</div>
+												<div className="bg-gray-50 p-3 rounded-md md:col-span-2">
+													<label className="text-sm font-medium text-gray-500">Difficult Habits</label>
+													<p className="text-base text-gray-900 mt-1">{progress.habitsDifficult || "N/A"}</p>
+												</div>
+												{/* App Feedback */}
+												<div className="bg-gray-50 p-3 rounded-md md:col-span-2">
+													<label className="text-sm font-medium text-gray-500">App Feedback</label>
+													<p className="text-base text-gray-900 mt-1">{progress.appFeedback || "N/A"}</p>
+												</div>
+												<div className="bg-gray-50 p-3 rounded-md md:col-span-2">
+													<label className="text-sm font-medium text-gray-500">Suggestions</label>
+													<p className="text-base text-gray-900 mt-1">{progress.suggestions || "N/A"}</p>
+												</div>
+												<div className="bg-gray-50 p-3 rounded-md">
+													<label className="text-sm font-medium text-gray-500">Liked Features</label>
+													<p className="text-base text-gray-900 mt-1">{progress.likedFeatures || "N/A"}</p>
+												</div>
+												<div className="bg-gray-50 p-3 rounded-md md:col-span-2">
+													<label className="text-sm font-medium text-gray-500">Coach Review</label>
+													<p className="text-base text-gray-900 mt-1">{progress.coachReview || "N/A"}</p>
+												</div>
+												{/* Period Tracking */}
+												<div className="bg-gray-50 p-3 rounded-md md:col-span-2">
+													<label className="text-sm font-medium text-gray-500">Period Details</label>
+													<p className="text-base text-gray-900 mt-1">{progress.periodDetails || "N/A"}</p>
+												</div>
+											</div>
+											
+											{/* Body Measurements Table */}
+											{progress.measurements && progress.measurements.length > 0 && (
+												<div className="mt-6">
+													<h5 className="text-lg font-semibold text-gray-700 mb-4">Body Measurements (inches)</h5>
+													<div className="overflow-x-auto">
+														<table className="min-w-full bg-white border border-gray-200 rounded-lg table-fixed">
+															<thead className="bg-gray-50">
+																<tr>
+																	<th className="w-1/3 px-4 py-3 text-left text-sm font-medium text-gray-700 border-b border-gray-200">
+																		Measurements
+																	</th>
+																	<th className="w-1/3 px-4 py-3 text-center text-sm font-medium text-gray-700 border-b border-gray-200">
+																		Day 1
+																	</th>
+																	<th className="w-1/3 px-4 py-3 text-center text-sm font-medium text-gray-700 border-b border-gray-200">
+																		Current
+																	</th>
+																</tr>
+															</thead>
+															<tbody className="divide-y divide-gray-200">
+																{progress.measurements.map((measurement, measurementIndex) => {
+																	const measurements = [
+																		{ label: "Chest", day1: measurement.day1Chest, current: measurement.currentChest },
+																		{ label: "Right Arm", day1: measurement.day1RightArm, current: measurement.currentRightArm },
+																		{ label: "Left Arm", day1: measurement.day1LeftArm, current: measurement.currentLeftArm },
+																		{ label: "Belly Button", day1: measurement.day1BellyButton, current: measurement.currentBellyButton },
+																		{ label: "Waist", day1: measurement.day1Waist, current: measurement.currentWaist },
+																		{ label: "Hips", day1: measurement.day1Hips, current: measurement.currentHips },
+																		{ label: "Left Thigh", day1: measurement.day1LeftThigh, current: measurement.currentLeftThigh },
+																		{ label: "Right Thigh", day1: measurement.day1RightThigh, current: measurement.currentRightThigh },
+																		{ label: "Wrist", day1: measurement.day1Wrist, current: measurement.currentWrist }
+																	];
+
+																	return measurements.map((item, itemIndex) => {
+																		return (
+																			<tr key={`${measurementIndex}-${itemIndex}`} className="hover:bg-gray-50">
+																				<td className="w-1/3 px-4 py-3 text-sm font-medium text-gray-900">
+																					{item.label}
+																				</td>
+																				<td className="w-1/3 px-4 py-3 text-sm text-center text-gray-700">
+																					{item.day1 || "N/A"}
+																				</td>
+																				<td className="w-1/3 px-4 py-3 text-sm text-center text-gray-700">
+																					{item.current || "N/A"}
+																				</td>
+																			</tr>
+																		);
+																	});
+																})}
+															</tbody>
+														</table>
+													</div>
+												</div>
+											)}
+										</div>
+									))}
+								</div>
+							)}
 						</>
 					) : (
 						<div className="text-center py-12">
