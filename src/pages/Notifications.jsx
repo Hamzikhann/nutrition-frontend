@@ -10,6 +10,9 @@ import { IoMdAdd } from "react-icons/io";
 function Notifications() {
   const [openMenu, setOpenMenu] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreateFolderModalOpen, setIsCreateFolderModalOpen] = useState(false);
+  const [folderName, setFolderName] = useState('');
+  const [selectedCategories, setSelectedCategories] = useState([]);
 
   const notificationsData = [
     {
@@ -74,6 +77,21 @@ function Notifications() {
   const handleDelete = (row) => {
     console.log("Delete clicked for:", row.name);
     setOpenMenu(null);
+  };
+
+  const handleCategoryChange = (category) => {
+    setSelectedCategories(prev =>
+      prev.includes(category)
+        ? prev.filter(c => c !== category)
+        : [...prev, category]
+    );
+  };
+
+  const handleCreateFolder = () => {
+    console.log("Create Folder:", folderName, selectedCategories);
+    setIsCreateFolderModalOpen(false);
+    setFolderName('');
+    setSelectedCategories([]);
   };
 
   const columns = [
@@ -305,6 +323,14 @@ function Notifications() {
           <div className="flex flex-wrap items-center gap-2">
             <Searchbar />
             <Button
+              onClick={() => setIsCreateFolderModalOpen(true)}
+              text="Create Folder"
+              bg="bg-[#46abbd]"
+              icon={IoMdAdd}
+              textColor="text-white"
+              borderColor="border-[#46abbd]"
+            />
+            <Button
               onClick={() => setIsModalOpen(true)}
               text="Send New Notification"
               bg="bg-[#46abbd]"
@@ -439,6 +465,62 @@ function Notifications() {
                 <option value="3 month">3 Months</option>
                 <option value="6 month">6 Months</option>
               </select>
+            </div>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={isCreateFolderModalOpen}
+        onClose={() => setIsCreateFolderModalOpen(false)}
+        title="Create Folder"
+        showTitle={true}
+        showCloseIcon={true}
+        showDivider={true}
+        width="min-w-[300px] max-w-2xl"
+        secondaryBtnText="Cancel"
+        primaryBtnText="Add"
+        onPrimaryClick={handleCreateFolder}
+      >
+        <div className="flex flex-col gap-4 pb-4">
+          <div className="w-full flex flex-col gap-2">
+            <label className="text-base font-normal text-gray-600">
+              Folder Name:
+            </label>
+            <input
+              type="text"
+              placeholder="Enter folder name"
+              value={folderName}
+              onChange={(e) => setFolderName(e.target.value)}
+              className="w-full py-3 px-4 rounded-lg text-sm bg-gray-100 border border-gray-300
+                            focus:outline-none focus:border-[#46acbe]"
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-base font-normal text-gray-600">
+              Select Categories:
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                "Inactive users",
+                "Active users",
+                "Progress less than 50",
+                "Progress less than 70",
+                "Progress more than 90",
+                "User not doing workout",
+                "User not posting meals",
+                "Trial Users"
+              ].map((category) => (
+                <label key={category} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedCategories.includes(category)}
+                    onChange={() => handleCategoryChange(category)}
+                    className="w-4 h-4 text-[#46abbd] bg-gray-100 border-gray-300 rounded"
+                  />
+                  <span className="text-sm text-gray-700">{category}</span>
+                </label>
+              ))}
             </div>
           </div>
         </div>
