@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Searchbar from "../components/Searchbar";
 import Button from "../components/Button";
 import Modal from "../components/Modal";
@@ -6,6 +6,8 @@ import Filter from "../components/Filter";
 import DataTable from "react-data-table-component";
 import { FiMoreVertical } from "react-icons/fi";
 import { IoMdAdd } from "react-icons/io";
+import ApiService from "../services/ApiServices";
+import { toast } from "react-toastify";
 
 function Notifications() {
   const [openMenu, setOpenMenu] = useState(null);
@@ -13,6 +15,46 @@ function Notifications() {
   const [isCreateFolderModalOpen, setIsCreateFolderModalOpen] = useState(false);
   const [folderName, setFolderName] = useState('');
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [folders, setFolders] = useState([]);
+  const [isUserSelectionModalOpen, setIsUserSelectionModalOpen] = useState(false);
+  const [selectedFolder, setSelectedFolder] = useState(null);
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [notificationTitle, setNotificationTitle] = useState('');
+  const [notificationContent, setNotificationContent] = useState('');
+  const [folderUsers, setFolderUsers] = useState([]);
+
+  // Fetch folders and notifications on component mount
+  useEffect(() => {
+    fetchFolders();
+    fetchNotifications();
+  }, []);
+
+  const fetchFolders = async () => {
+    try {
+      const response = await ApiService.getFolders();
+      if (response?.data?.success) {
+        setFolders(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching folders:", error);
+      toast.error("Failed to fetch folders");
+    }
+  };
+
+  const fetchNotifications = async () => {
+    try {
+      const response = await ApiService.getNotifications();
+      if (response?.data?.success) {
+        setNotifications(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      toast.error("Failed to fetch notifications");
+    }
+  };
 
   const notificationsData = [
     {
@@ -87,11 +129,106 @@ function Notifications() {
     );
   };
 
-  const handleCreateFolder = () => {
-    console.log("Create Folder:", folderName, selectedCategories);
-    setIsCreateFolderModalOpen(false);
-    setFolderName('');
-    setSelectedCategories([]);
+  const handleCreateFolder = async () => {
+    if (folderName.trim()) {
+      setLoading(true);
+      try {
+        const response = await ApiService.createFolder({
+          name: folderName,
+          categories: selectedCategories
+        });
+        if (response?.data?.success) {
+          toast.success("Folder created successfully");
+          fetchFolders(); // Refresh folders list
+          setIsCreateFolderModalOpen(false);
+          setFolderName('');
+          setSelectedCategories([]);
+        }
+      } catch (error) {
+        console.error("Error creating folder:", error);
+        toast.error("Failed to create folder");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleFolderClick = async (folder) => {
+    setSelectedFolder(folder);
+    setLoading(true);
+    try {
+      const response = await ApiService.getUsersByCategories({
+        categories: folder.categories
+      });
+      if (response?.data?.success) {
+        setFolderUsers(response.data.data);
+        setSelectedUsers([]);
+        setSelectAll(false);
+        setIsUserSelectionModalOpen(true);
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      toast.error("Failed to fetch users");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUserSelect = (userId) => {
+    setSelectedUsers(prev =>
+      prev.includes(userId)
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedUsers([]);
+    } else {
+      const allUserIds = folderUsers.map(user => user.id);
+      setSelectedUsers(allUserIds);
+    }
+    setSelectAll(!selectAll);
+  };
+
+  const handleSaveUserSelection = () => {
+    // For now, just close the modal. In a real app, you might want to save this selection
+    setIsUserSelectionModalOpen(false);
+    setSelectedFolder(null);
+    setSelectedUsers([]);
+    setSelectAll(false);
+  };
+
+  const handleSendNotification = async () => {
+    if (!notificationTitle.trim() || !notificationContent.trim() || selectedUsers.length === 0) {
+      toast.error("Please fill all fields and select users");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await ApiService.createNotification({
+        title: notificationTitle,
+        content: notificationContent,
+        userIds: selectedUsers,
+        folderId: selectedFolder?.id || null
+      });
+      if (response?.data?.success) {
+        toast.success("Notification created successfully");
+        fetchNotifications(); // Refresh notifications list
+        setIsModalOpen(false);
+        setNotificationTitle('');
+        setNotificationContent('');
+        setSelectedUsers([]);
+        setSelectedFolder(null);
+      }
+    } catch (error) {
+      console.error("Error sending notification:", error);
+      toast.error("Failed to send notification");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const columns = [
@@ -382,7 +519,7 @@ function Notifications() {
         width="min-w-[300px] max-w-2xl"
         secondaryBtnText="Cancel"
         primaryBtnText="Send Now"
-        onPrimaryClick={() => console.log("Primary Clicked")}
+        onPrimaryClick={handleSendNotification}
       >
         <div className="flex flex-col gap-4 pb-4">
           <div className="w-full flex flex-col gap-2">
@@ -392,7 +529,9 @@ function Notifications() {
             <input
               type="text"
               placeholder="enter post title"
-              className="w-full py-3 px-4 rounded-lg text-sm bg-gray-100 border border-gray-300 
+              value={notificationTitle}
+              onChange={(e) => setNotificationTitle(e.target.value)}
+              className="w-full py-3 px-4 rounded-lg text-sm bg-gray-100 border border-gray-300
                             focus:outline-none focus:border-[#46acbe]"
             />
           </div>
@@ -403,69 +542,25 @@ function Notifications() {
             <textarea
               placeholder="type"
               rows={4}
-              className="w-full py-3 px-4 rounded-lg text-sm bg-gray-100 border border-gray-300 
+              value={notificationContent}
+              onChange={(e) => setNotificationContent(e.target.value)}
+              className="w-full py-3 px-4 rounded-lg text-sm bg-gray-100 border border-gray-300
                 focus:outline-none focus:border-[#46acbe] resize-y"
             />
             <p className="text-xs text-gray-600">10,000 Max Characters</p>
           </div>
           <h2 className="text-xl font-semibold text-gray-800">Target Users:</h2>
-          <div className="flex flex-wrap justify-start gap-3">
-            <div className="w-[48%] flex flex-col gap-2">
-              <label className="text-base font-normal text-gray-600">
-                Duration:
-              </label>
-              <select
-                defaultValue="1 month"
-                className="w-full py-3 px-4 rounded-lg text-sm bg-gray-100 border border-gray-300 
-                focus:outline-none focus:border-[#46acbe]"
+          <div className="flex flex-wrap gap-2">
+            {folders.map((folder) => (
+              <button
+                key={folder.id}
+                onClick={() => handleFolderClick(folder)}
+                disabled={loading}
+                className="px-3 py-2 bg-blue-100 hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed text-blue-700 rounded-lg text-sm transition"
               >
-                <option value="1 month">1 Month</option>
-                <option value="3 month">3 Months</option>
-                <option value="6 month">6 Months</option>
-              </select>
-            </div>
-            <div className="w-[48%] flex flex-col gap-2">
-              <label className="text-base font-normal text-gray-600">
-                Duration:
-              </label>
-              <select
-                defaultValue="1 month"
-                className="w-full py-3 px-4 rounded-lg text-sm bg-gray-100 border border-gray-300 
-                focus:outline-none focus:border-[#46acbe]"
-              >
-                <option value="1 month">1 Month</option>
-                <option value="3 month">3 Months</option>
-                <option value="6 month">6 Months</option>
-              </select>
-            </div>
-            <div className="w-[48%] flex flex-col gap-2">
-              <label className="text-base font-normal text-gray-600">
-                Duration:
-              </label>
-              <select
-                defaultValue="1 month"
-                className="w-full py-3 px-4 rounded-lg text-sm bg-gray-100 border border-gray-300 
-                focus:outline-none focus:border-[#46acbe]"
-              >
-                <option value="1 month">1 Month</option>
-                <option value="3 month">3 Months</option>
-                <option value="6 month">6 Months</option>
-              </select>
-            </div>
-            <div className="w-[48%] flex flex-col gap-2">
-              <label className="text-base font-normal text-gray-600">
-                Duration:
-              </label>
-              <select
-                defaultValue="1 month"
-                className="w-full py-3 px-4 rounded-lg text-sm bg-gray-100 border border-gray-300 
-                focus:outline-none focus:border-[#46acbe]"
-              >
-                <option value="1 month">1 Month</option>
-                <option value="3 month">3 Months</option>
-                <option value="6 month">6 Months</option>
-              </select>
-            </div>
+                {folder.name}
+              </button>
+            ))}
           </div>
         </div>
       </Modal>
@@ -522,6 +617,98 @@ function Notifications() {
                 </label>
               ))}
             </div>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={isUserSelectionModalOpen}
+        onClose={() => setIsUserSelectionModalOpen(false)}
+        title={`Select Users for ${selectedFolder?.name || ''}`}
+        showTitle={true}
+        showCloseIcon={true}
+        showDivider={true}
+        width="min-w-[600px] max-w-4xl"
+        secondaryBtnText="Cancel"
+        primaryBtnText="Save"
+        onPrimaryClick={handleSaveUserSelection}
+      >
+        <div className="flex flex-col gap-4 pb-4">
+          {folderUsers.length > 0 && (
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={selectAll}
+                onChange={handleSelectAll}
+                className="w-4 h-4 text-[#46abbd] bg-gray-100 border-gray-300 rounded focus:ring-[#46abbd] focus:ring-2"
+              />
+              <label className="text-sm font-medium text-gray-700">Select All</label>
+            </div>
+          )}
+          <div className="max-h-96 overflow-y-auto">
+            {loading ? (
+              <div className="flex justify-center items-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#46abbd]"></div>
+              </div>
+            ) : folderUsers.length > 0 ? (
+              <table className="w-full text-sm text-left text-gray-500">
+                <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3">Select</th>
+                    <th scope="col" className="px-6 py-3">Name</th>
+                    <th scope="col" className="px-6 py-3">Email</th>
+                    <th scope="col" className="px-6 py-3">Phone</th>
+                    <th scope="col" className="px-6 py-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {folderUsers.map((user) => (
+                    <tr key={user.id} className="bg-white border-b hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedUsers.includes(user.id)}
+                          onChange={() => handleUserSelect(user.id)}
+                          className="w-4 h-4 text-[#46abbd] bg-gray-100 border-gray-300 rounded focus:ring-[#46abbd] focus:ring-2"
+                        />
+                      </td>
+                      <td className="px-6 py-4 font-medium text-gray-900">
+                        {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : 'N/A'}
+                      </td>
+                      <td className="px-6 py-4">{user.email || 'N/A'}</td>
+                      <td className="px-6 py-4">{user.phoneNo || 'N/A'}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          user.isActive === 'Y' ? 'bg-green-100 text-green-800' :
+                          user.isActive === 'N' ? 'bg-red-100 text-red-800' :
+                          user.isActive ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {user.isActive === 'Y' ? 'Active' : user.isActive === 'N' ? 'Inactive' : user.isActive ? 'Trial' : 'N/A'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div className="py-8 text-center">
+                <svg
+                  className="mx-auto h-12 w-12 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1}
+                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                  />
+                </svg>
+                <h3 className="mt-2 text-sm font-medium text-gray-900">No users found</h3>
+                <p className="mt-1 text-sm text-gray-500">There are no users available for this folder.</p>
+              </div>
+            )}
           </div>
         </div>
       </Modal>
