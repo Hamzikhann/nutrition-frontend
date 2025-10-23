@@ -38,7 +38,10 @@ function Recipes() {
 		subCategoryId: "",
 		ingredients: "",
 		directions: "",
-		nutritions: "",
+		calories: "",
+		protein: "",
+		carbs: "",
+		fat: "",
 		note: ""
 	});
 	const [file, setFile] = useState(null);
@@ -63,12 +66,10 @@ function Recipes() {
 		},
 		{ name: "ingredients", label: "Ingredients details", type: "textarea", placeholder: "Enter details" },
 		{ name: "directions", label: "Cooking Steps", type: "textarea", placeholder: "Enter steps" },
-		{
-			name: "nutritions",
-			label: "Nutritions",
-			type: "textarea",
-			placeholder: "Enter nutritions eg. fats 100, protein 100 and so on "
-		},
+		{ name: "calories", label: "Calories (G)", type: "text", placeholder: "Enter calories" },
+		{ name: "protein", label: "Protein (G)", type: "text", placeholder: "Enter protein" },
+		{ name: "carbs", label: "Carbs (G)", type: "text", placeholder: "Enter carbs" },
+		{ name: "fat", label: "Fat (G)", type: "text", placeholder: "Enter fat" },
 		{
 			name: "note",
 			label: "Note",
@@ -321,9 +322,21 @@ function Recipes() {
 			dataForm.append("image", file);
 		}
 
-		Object.keys(formData).forEach((key) => {
-			dataForm.append(key, formData[key]);
-		});
+		// Build nutritions string from separate fields
+		let nutritions = [];
+		if (formData.calories) nutritions.push(`cal ${formData.calories}`);
+		if (formData.protein) nutritions.push(`protein ${formData.protein}`);
+		if (formData.carbs) nutritions.push(`carbs ${formData.carbs}`);
+		if (formData.fat) nutritions.push(`fats ${formData.fat}`);
+		dataForm.append("nutritions", nutritions.join(", "));
+
+		// Append other fields
+		dataForm.append("title", formData.title);
+		dataForm.append("categoryId", formData.categoryId);
+		dataForm.append("subCategoryId", formData.subCategoryId);
+		dataForm.append("ingredients", formData.ingredients);
+		dataForm.append("directions", formData.directions);
+		dataForm.append("note", formData.note);
 
 		try {
 			let data = {
@@ -340,8 +353,11 @@ function Recipes() {
 					categoryId: "",
 					subCategoryId: "",
 					ingredients: "",
-					nutritions: "",
 					directions: "",
+					calories: "",
+					protein: "",
+					carbs: "",
+					fat: "",
 					note: ""
 				});
 				setRecipeErrors({});
@@ -365,14 +381,19 @@ function Recipes() {
 		const categoryId = subCat ? subCat.categoryId : "";
 		const matchingSubCategory = subCategories.find((sub) => sub.id === item.dishesCategoryId);
 
+		// Parse nutritions string into individual fields
+		const parsedNutritions = parseNutritions(item.nutritions || "");
+
 		setFormData({
 			title: item.title || "",
 			categoryId: categoryId,
 			subCategoryId: matchingSubCategory ? matchingSubCategory.id : "",
-
 			ingredients: item.ingredients || "",
 			directions: item.directions || "",
-			nutritions: item.nutritions || "",
+			calories: parsedNutritions.cal || "",
+			protein: parsedNutritions.protein || "",
+			carbs: parsedNutritions.carbs || "",
+			fat: parsedNutritions.fats || "",
 			note: item.note || ""
 		});
 		setIsEditModalOpen(true);
@@ -427,9 +448,21 @@ function Recipes() {
 			dataForm.append("image", file);
 		}
 
-		Object.keys(formData).forEach((key) => {
-			dataForm.append(key, formData[key]);
-		});
+		// Build nutritions string from separate fields
+		let nutritions = [];
+		if (formData.calories) nutritions.push(`cal ${formData.calories}`);
+		if (formData.protein) nutritions.push(`protein ${formData.protein}`);
+		if (formData.carbs) nutritions.push(`carbs ${formData.carbs}`);
+		if (formData.fat) nutritions.push(`fats ${formData.fat}`);
+		dataForm.append("nutritions", nutritions.join(", "));
+
+		// Append other fields
+		dataForm.append("title", formData.title);
+		dataForm.append("categoryId", formData.categoryId);
+		dataForm.append("subCategoryId", formData.subCategoryId);
+		dataForm.append("ingredients", formData.ingredients);
+		dataForm.append("directions", formData.directions);
+		dataForm.append("note", formData.note);
 
 		dataForm.append("id", selectedRecipeForEdit.id);
 
@@ -447,8 +480,11 @@ function Recipes() {
 					categoryId: "",
 					subCategoryId: "",
 					ingredients: "",
-					nutritions: "",
 					directions: "",
+					calories: "",
+					protein: "",
+					carbs: "",
+					fat: "",
 					note: ""
 				});
 				setRecipeErrors({});
